@@ -23,17 +23,23 @@ To evaluate the path discovery ability of our directed seed search method, we se
 \end{table}
 
 Figure~\ref{path-discovery} shows the normalized path discovery for these 8 programs. From this figure, we can see that CS can achieve higher path coverage when comparing with other search strategies. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance loss for some other benchmarks, like \texttt{tcpdump}. 
-\begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth]{figures/path-discovery.pdf} 
-\caption{Path Discovery for different search strategies.}\label{path-discovery}
-\end{figure}
+
 Figure~\ref{path-detail} describes these four different search strategies for four different samples according to the test time, where the x-axis of each graph indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
 
 From Figure~\ref{path-detail}, both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
 
 Based on this result, we can see that cosine similarity based seed search strategy can touch more paths than other strategies. So we selected CS as our search strategy in the following bug finding evaluation.
 
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth]{figures/path-discovery.pdf} 
+\caption{Path Discovery for different search strategies.}\label{path-discovery}
+\end{figure}
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth]{figures/path-time-detail.pdf} 
+\caption{Path Discovery for different search strategies within 24 hours.}\label{path-detail}
+\end{figure}
 \subsection{Bug Finding}
 In this section, we evaluated our method with two different benchmarks. And we also compared the results of the other off-the-shelf vulnerability discovery tools, which are LibFuzzer, AFL, KLEE, S2E, and Driller.
 
@@ -53,8 +59,6 @@ Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results o
   \centering
 	\begin{tabular}{p{2cm}<{\centering} p{2cm}<{\centering} p{3cm}<{\centering} p{1.5cm}<{\centering}}
 		\toprule
-		                         & \multicolumn{2}{c}{Tool Property} &  \\
-		\cmidrule(r){2-3}
 		Tool                     & target   & method                  & Triggered Bugs\# \\ \midrule
 		AFL                      & Binary   & Fuzz                    & 3             \\
 		LibFuzzer                & Source   & Fuzz                    & 4             \\
@@ -100,11 +104,7 @@ Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results o
 	\end{tabular}
 \end{table}
 
-\begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth]{figures/path-time-detail.pdf} 
-\caption{Path Discovery for different search strategies within 24 hours.}\label{path-detail}
-\end{figure}
+
 
 \subsubsection{LAVA}~\par
 \vskip0.5mm
