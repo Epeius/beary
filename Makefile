@@ -2,7 +2,7 @@ TEX=pdflatex
 BIBTEX=bibtex
 
 ALL=main
-SOURCES := $(wildcard *.bib *.sty *.cls *.tex codes/* figures/* extern-styles/*)
+SOURCES := $(wildcard *.bib *.sty *.cls *.tex codes/* figures/* code-styles/*)
 
 # Sources are copied to the .build folder to manage LaTeX's flurry of
 # intermediate files.
