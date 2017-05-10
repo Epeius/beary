@@ -18,7 +18,7 @@ Compared with using fuzz testing and symbolic execution separately, this hybrid 
 
 \subsection{Symbolic Loop Buckets}
 Symbolic loop, whose loop control variable depends on symbolic data, will cause serious ``path explosion'' problem as its loop times will range from 0 to infinite for the worst case. 
-Even though the hybrid testing method can ease the ``path explosion'' problem, but the states forked from the symbolic loop will quickly force the number of states increasing to the budget. So the symbolic loops have to be carefully handled to avoid getting stuck at the loop spot. AFL utilizes \emph{Loop Bucket} mechanism to avoid collecting too many test cases which only affect the loop times into the seed queue. It groups the loop times into 8 different buckets, i.e. [1, 2, 3, 4-7, 8-15, 16-31, 32-127, 128+]. Only changes happened between different buckets will be regarded as new behaviors. Based on this idea, we proposed a \textit{Symbolic Loop Bucket (SLB)} to handle the symbolic loop when performing hybrid testing. The algorithm of SLB is described in Algorithm~\ref{SLB}.
+Even though the hybrid testing method can ease the ``path explosion'' problem, but the states forked from the symbolic loop will quickly force the number of states to increase to the budget. So the symbolic loops have to be carefully handled to avoid getting stuck at the loop spot. AFL utilizes \emph{Loop Bucket} mechanism to avoid collecting too many test cases which only affect the loop times into the seed queue. It groups the loop times into 8 different buckets, i.e. [1, 2, 3, 4-7, 8-15, 16-31, 32-127, 128+]. Only changes happened between different buckets will be regarded as new behaviors. Based on this idea, we proposed a \textit{Symbolic Loop Bucket (SLB)} to handle the symbolic loop when performing hybrid testing. The algorithm of SLB is described in Algorithm~\ref{SLB}.
 
 Loops are extracted from the target program by static analysis. These loops will be configured to symbolic execution engine to help it recognize loops in runtime. All the symbolic loops can be distinguished from the others by checking whether the loop exit condition is affected by symbolic data or not (Line 1$\sim$3). For the edge belong to symbolic loop, the uncovered loop buckets for this loop will be obtained by analyzing the \textit{Bitmap} mentioned before (Line 5). 
 State forking is disabled in already covered loop buckets, and the program will loop for one more time (Line 16\&17). Once an uncovered bucket is reached, the corresponding test case will be generated and then this uncovered bucket will be removed from the uncovered loop buckets to avoid generating multiple test cases (Line 7$\sim$12). After generating test cases for all the uncovered buckets, the loop will be prohibited from being executed for more times. This can make sure that all the loop buckets will be covered without coming across with the ``path explosion'' problem.
@@ -55,15 +55,20 @@ State forking is disabled in already covered loop buckets, and the program will 
 \end{algorithm}  
 
 \subsection{Lazy Symbolic Pointer}
-The motivated code snippet in Listing~\ref{RE-LSP} shows the basic symbolic pointer problem in symbolic execution. The \texttt{EAX} register in line 6 is a symbolic data that derived from the input file. And text\_char is a concrete const Boolean Array that represents the whether the \texttt{EAX} value is an ASCII text. Then based on the returned value from text\_char, the code will perform some further process (Line 8$\sim$10). Because the \texttt{EAX} in Line 6 is marked as symbolic, so it will lead to the symbolic pointer problem as it can point to multiple addresses.
+The motivated code snippet in Listing~\ref{RE-LSP} shows the basic symbolic pointer problem in symbolic execution. 
+The first parameter \texttt{buf} of function \texttt{looks\_ascii} is derived from the input file. Because the input file has been marked as symbolic data, so when \texttt{looks\_ascii} tries to determine whether each character of the input data appears in plain ASCII text at Line 18, the problem of symbolic pointer occurs. Because \texttt{buf[i]} has a worst case of 256 possible values (\textit{unsigned char}), so if we fork a new state for each possible value of \texttt{buf[i]}, then the total number of states forked from at Line 18 will quickly reach to $256^{nbytes}$ which will raise ``path explosion'' problem.
 
+When given a symbolic pointer, based on different memory models, different handle process can be taken. For example, in \textbf{full symbolic memory model}, each possible value of this pointer will fork a corresponding state. There also exists a strategy namely \textit{address concretization} which will concretize the pointer to a single specific address. Obviously, the full symbolic memory model will raise the serious state explosion (as mentioned before) and the address concretization may lose some interesting paths. To mitigate the scalability problems of full symbolic memory model and the loss of interesting paths of address concretization, a \textbf{partial symbolic memory model} has been to make a trade-off in recent years. The partial symbolic memory model tries to concretize all symbolic pointer write operation and treats all symbolic pointer read operation as full symbolic memory model. However, as the instruction at Line 18 is the read operation, so partial symbolic memory model will still fork $256^{nbytes}$ states and raise the ``path explosion'' problem.
 
-When given a symbolic pointer, based on different memory models, different handle process can be taken. For example, in full symbolic memory model, each possible value of this pointer will fork a corresponding state. There also exists a strategy namely address concretization which will concretize the pointer to a single specific address. Obviously, the full symbolic memory model will raise the serious state explosion and the address concretization may lose some interesting paths. To mitigate the scalability problems of full symbolic memory model and the loss of interesting paths of address concretization, a partial symbolic memory model has been to make a trade-off in recent years. The partial symbolic memory model tries to concretize all symbolic pointer write operation and treats all symbolic pointer read operation as full symbolic memory model. 
+A \textit{lazy forking} strategy proposed in S2E is leveraged to ease the problem along with the large number of states forked from symbolic pointer read operation in partial symbolic memory model. 
+Lazy forking tries to avoid maintaining expensive symbolic pointers and large states number by forking a pending state in concolic execution. 
+For example, for the instruction at Line 18 in Listing~\ref{RE-LSP}, suppose the concrete value of \texttt{buf[i]} for $i=[0,1,2,3]$ is \texttt{`A'}. Then the lazy forking will try to fork the current state to two states, one with a \textit{hard constraint} which can be expressed as $\texttt{buf[i]}$== \texttt{`A'} and the other one with a \textit{soft constraint} which can expressed as $\texttt{buf[i]}$ != \texttt{`A'}.
+By doing this, the ``path explosion'' problem is postponed to later moment. For example, new states will be only forked after the current state is terminated when using DFS search strategy.
 
-The lazy forking strategy in S2E is also leveraged to ease the problem along with the large number of states forked from symbolic pointer read operation in partial symbolic memory model. Lazy forking is utilized to avoid maintaining expensive symbolic pointers in concolic execution. For example, for the instruction in Line 6 in Listing~\ref{RE-LSP}, suppose \texttt{EAX} is read from the input file and its concrete value is 0x41. Then when the concolic execution engine executes to this statement, it will try to fork the current state with a hard constraint which can be expressed as ``$EAX == 0x41$''. Unlike the other memory models, the engine will not fork all the possible value for \texttt{EAX} but only add the soft constraint of ``$EAX \neq 0x41$'' to the other forked state, which will reduce the number of state to a large extent. 
+% \texttt{buf[0]} is read from the input file and its concrete value is 0x41. Then when the concolic execution engine executes to this statement, it will try to fork the current state with a hard constraint which can be expressed as ``$EAX == 0x41$''. Unlike the other memory models, the engine will not fork all the possible value for \texttt{EAX} but only add the soft constraint of ``$EAX \neq 0x41$'' to the other forked state, which will reduce the number of state to a large extent. 
 
-While because of the hard constraint, the state forking at Line 10 will fail for the original state which means some soundness paths will not be covered by this state. As the objective of concolic execution is to assist fuzz testing to uncover more paths as soon as possible, so this will bring some performance loss. To mitigate this problem, we introduced a method called Lazy Symbolic Pointer which is built on top of partial symbolic memory model and lazy forking. The detailed algorithm of LSP is shown in Algorithm~\ref{LSP}.
-\lstinputlisting[label={RE-LSP}, language=nasm,style=nasm,caption={A real-world binary code that contains symbolic pointer dereference.}]{codes/real-eaxmple-LSP.asm}
+However, because of the hard constraint, the state forking at Line 24\&25 will fail for the current state. And the bug at Line 26 will be triggered only after enumerating all possible values for \texttt{buf[0]}, \texttt{buf[1]}, \texttt{buf[2]}, and \texttt{buf[3]}. So even though the lazy forking can ease the ``path explosion'' problem but it will take longer time to trigger some soundness paths. This will bring performance loss as the objective of symbolic execution is to assist fuzz testing to uncover more paths as soon as possible in hybrid testing. 
+To mitigate this problem, we introduced a novel method \emph{Lazy Symbolic Pointer} which is built on top of lazy forking. The detailed algorithm of LSP is shown in Algorithm~\ref{LSP}.
 
 \begin{algorithm}
   \caption{Lazy Symbolic Pointer}
@@ -76,7 +81,7 @@ While because of the hard constraint, the state forking at Line 10 will fail for
   {
     return $null$\;
   }
-  $Conditions = S.getRelateConditions(offs).strip(C_H)$\;
+  $Conditions = S.getConditions().strip(C_H)$\;
   \ForEach{$s_p$ in $S_P.find(offs)$}
   {
     $s_{tmp} = s_p.clone()$\;
@@ -93,11 +98,30 @@ While because of the hard constraint, the state forking at Line 10 will fail for
   return $null$\;
 \end{algorithm}
   
-When performing lazy forking, all the states whose path constraints contain the soft constraints will be collected into the \emph{Pending States}. And the pending states are grouped by the input offsets that affect the corresponding soft constraint (Line 6\&7). For the soft constraint that may be affected by more than one input offsets, the pending state will be collected to the groups of all the offsets in the constraint. For example, as the soft constraint ``Not (Eq (ReadLSB w32 0x10 symbolic\_input, 0x41))'' is affected by four bytes (i.e. 0x10, 0x11, 0x12 and 0x13), so the pending state will be appended to the groups indexed by 0x10, 0x11, 0x12 and 0x13. 
+When performing lazy forking, all the states whose path constraints contain the soft constraints will be collected into \emph{Pending States}. And the pending states are grouped by the input offsets that affect the corresponding soft constraint. For the soft constraint that may be affected by more than one input offsets, the pending state will be collected to the groups of all the offsets in the constraint. For example, as the soft constraint ``Not (Eq (ReadLSB w32 0x10 symbolic\_input, \texttt{`A'}))'' is affected by four bytes (i.e. 0x10, 0x11, 0x12 and 0x13), so the pending state will be appended to the groups indexed by 0x10, 0x11, 0x12 and 0x13. 
 
 Then when the symbolic execution engine fails to fork at the branch that depends on soft constraints, such as the branch at line 10 in Listing~\ref{RE-LSP}, the failed condition will be inspected to extract the input offsets that affect this branch (Line 10\&11). LSP ignores the case that the reason of fork failure does not result from the lazy forking (Line 12\&13). For every offset that affects the failed condition, we extract all the related conditions in path constraints except for the hard constraint (Line 14), and then these conditions will be added to the pending states that related to the input offset to generate test cases (Line 15$\sim$18). 
 
-% TODO: Add a real example, or it is hard to understand %
+% TODO: Add a real example becaue ASM here is hard to understand %
+For the motivated code in Listing~\ref{RE-LSP}, suppose the \texttt{nbytes} is 5. Then when symbolic execution reaches Line 24, there will be five states in the system, i.e. one execution state $S_0$ and four pending states ($P_1$, $P_2$, $P_3$, $P_4$, and $P_5$). 
+Then path constraint for each states is listed as follows:
+\\
+\\
+\indent$S_0$: \texttt{buf[0] == `A' \&\& buf[1] == `A' \&\& buf[2] == `A' \&\& buf[3] == `A' \&\& buf[4] == `A'}
+
+$P_1$: \texttt{buf[0] != `A' \&\& null \&\& null  \&\& null  \&\& null}
+
+$P_2$: \texttt{buf[0] == `A' \&\& buf[1] != `A' \&\& null \&\& null  \&\& null}
+
+$P_3$: \texttt{buf[0] == `A' \&\& buf[1] == `A' \&\& buf[2] != `A' \&\& null  \&\& null}
+
+$P_4$: \texttt{buf[0] == `A' \&\& buf[1] == `A' \&\& buf[2] == `A' \&\& buf[3] != `A'  \&\& null}
+
+$P_5$: \texttt{buf[0] == `A' \&\& buf[1] == `A' \&\& buf[2] == `A' \&\& buf[3] == `A'  \&\& buf[4] != `A'}
+\\
+
+Obviously, $S_0$ will fail when trying to fork at Line 24\&25. Based on Listing~\ref{RE-LSP}, the path conditions of $S-0$ except for the hard conditions will be tried to add to each pending state to generate new test case. After stripping the hard conditions, the \textit{Conditions} at Line 6 in Listing~\ref{RE-LSP} will be $\texttt{buf[4]} == `A'$. Then this \textit{Conditions} will be added to each pending state. For example, the path constraint of $P_1$ after adding such conditions will be \texttt{buf[0] != `A' \&\& buf[4] == `A' \&\& buf[0] == `D' \&\& buf[1] == `E' \&\& buf[2] == `A' \&\& buf[3] == `D'}. After solving this path constraint, we can successfully generate a test case that satisfies the condition at Line 24\&25 and triggers the bug at Line 26. 
+An interesting point in our example is that $P_2$, $P_3$, $P_4$, and $P_5$ cannot successfully trigger this bug. This does not mean that these states are useless, for example, if the condition at Line 24\&25 is \texttt{buf[0] == `A' \&\& buf[1] == `B' \&\& buf[2] == `C' \&\& buf[3] == `D'}, then $P_2$ can successfully generate a corresponding test case that triggers the bug.
 
 Based on this algorithm, we can generate at least one new test case that satisfies the failed condition where the fork failure occurs because of lazy forking. But we still need to prove this test case will steer the program to execute the same path with the original state and then covers the branch that fails in the original state. A quick execution consistency proven is explained as follows:
 
@@ -107,7 +131,8 @@ $P_A = (B_0,T) \rightarrow (B_1,T) \rightarrow (B_2,F) \rightarrow (B_3,T)
 \rightarrow (B_4,F) \rightarrow (B_5,F) \rightarrow (B_6,F) \rightarrow (B_u,T)$
 \end{center}
 
-\noindent where $B_n$ refers to the $n-th$ branch. $T/F$ means state $A$ takes the \emph{True/False} branch and $B_u$ denotes the branch where the forking fails because of the extra hard constraint. Assume that hard constraint is $var==0xAB$ which is originated from the lazy forking from $B_1$, and the conditions at $B_3$ and $B_5$ are also affected by $var$.
+\noindent where $B_n$ refers to the $n$-th branch. $T/F$ means state $A$ takes the \emph{True/False} branch and $B_u$ denotes the branch where the forking fails because of the extra hard constraint. Assume that hard constraint is $var==0xAB$ which is originated from the lazy forking from $B_1$, and the conditions at $B_3$ and $B_5$ are also affected by $var$.
+\lstinputlisting[label={RE-LSP}, language=C,style=c,caption={A motivated code that contains symbolic pointer dereference.}]{codes/real-eaxmple-LSP.c}
 
 Suppose state $B$ is the corresponding pending state forked from $B_1$, and then, according to the LSP algorithm in Listing~\ref{LSP}, when state $A$ raises a fork failure at branch $B_u$, all the related constraints except the hard constraint will be added to state $B$. After that, the path constraint of state $B$ will be:
 \begin{center}
