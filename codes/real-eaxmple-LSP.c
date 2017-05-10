@@ -16,7 +16,7 @@ int looks_ascii(const uchar *buf, size_t nbytes, uchar *ubuf, size_t *ulen)
     *ulen = 0;
     for (i = 0; i < nbytes; i++) {
         int t = text_chars[buf[i]];
-        if (t != T)
+        if (t != T) 
             return 0;
         ubuf[(*ulen)++] = buf[i];
     }

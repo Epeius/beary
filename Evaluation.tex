@@ -1,7 +1,7 @@
-The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed search method on several real world binary programs, and in bug finding, a demo program which contains several bugs, as well as another benchmark based on real world program, are leveraged to demonstrate the ability of our prototype system on bug finding.
+The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed search methods on several real-world binary programs, and in bug finding, a demo program which contains several bugs, as well as another benchmark based on real-world program, are leveraged to demonstrate the ability of our prototype system on bug finding.
 
 \subsection{Path Discovery}
-To evaluate the path discovery ability of our directed seed search method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation was tested with one AFL node and lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have tested for four different kinds of search method, i.e. Orderly, Euclidean Distance, Cosine Similarity and Jaccard Index. The orderly search method is equal to vanilla AFL which selects test case in the seed queue one by one.  
+To evaluate the path discovery ability of the seed prioritization method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation was tested with one AFL node and lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have tested the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed prioritization strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.  
 
 \begin{table}
   \caption{\label{PD-8samples}Path discovery for 8 sample programs}
@@ -22,7 +22,9 @@ To evaluate the path discovery ability of our directed seed search method, we se
 	\end{tabular}
 \end{table}
 
-Figure~\ref{path-discovery} shows the normalized path discovery for these 8 programs. From this figure, we can see that CS can achieve higher path coverage when comparing with other search strategies. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance loss for some other benchmarks, like \texttt{tcpdump}. 
+Figure~\ref{path-discovery} shows the normalized path discovery for these 8 programs based on the results in Table~\ref{PD-8samples}. From this figure, we can see that CS can achieve higher path coverage when comparing with other search strategies. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance overhead for some other benchmarks, like \texttt{tcpdump}.
+
+An interesting point from Figure~\ref{path-discovery} is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because the input of \texttt{captone} is only plain texture file with some assembly code in it. This kind of input is not so well formatted the other inputs like ELF, JPEG, CAP and so on. And modifying any part of the input will have higher possibility to trigger new behaviors. So each seed file in the queue will have almost equal power to cover new code areas. 
 
 Figure~\ref{path-detail} describes these four different search strategies for four different samples according to the test time, where the x-axis of each graph indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
 
@@ -57,7 +59,7 @@ Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results o
 \begin{table}
   \caption{\label{CommonMB-results}Evaluation results on \textit{CommonMB}}
   \centering
-	\begin{tabular}{p{2cm}<{\centering} p{2cm}<{\centering} p{3cm}<{\centering} p{1.5cm}<{\centering}}
+	\begin{tabular}{p{2cm}<{\centering} p{2cm}<{\centering} p{3cm}<{\centering} p{3cm}<{\centering}}
 		\toprule
 		Tool                     & target   & method                  & Triggered Bugs\# \\ \midrule
 		AFL                      & Binary   & Fuzz                    & 3             \\
