@@ -10,6 +10,7 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
+\usepackage{subfigure}
 % For table
 \usepackage{booktabs}
 \usepackage{array}
@@ -33,7 +34,7 @@
 % In order to improve the ability of fuzz testing itself, we proposed seed prioritization method to select most promising seed to be mutated first. Then fuzz testing cannot test deeper code blocks which we use hybrid testing method to assit it. 
 % We implemented the prototype and evaluated it on some real-world binaies to demonstrate its effectiveness and efficiency. The experiments results show our prototype can be smarter than some other vulnerability discovery tools.
 
-% FIXME:
+%FIXME:
 Fuzz testing is a popular method to discover the bugs and vulnerabilities in software. However, traditional fuzz testing still faces the low coverage and fewer efficiency problems when testing real-world binary executables. Treating the program as a black-box makes it harder for fuzz testing to steer the program into deeper state space. In this paper, we improved the ability of fuzz testing itself by prioritizing the seed queue in coverage based evolutionary testing. Meanwhile, we took the advantage of hybrid testing method to improve the coverage with the assistance from symbolic execution. We have proposed two main optimizations to improve the ability of hybrid testing method. We also designed and implemented a prototype tool -- Beary on top of fuzz testing and symbolic execution, and the experiments results on real-world binary software have demonstrated that our method can make the fuzz testing more smarter when compared with other vulnerability discovery tools.
 % Need to be refactored
 
@@ -64,7 +65,10 @@ Our method is built on top of fuzz testing and symbolic execution, where we have
 
 \noindent\textit{\textbf{Distance Measure:}} Our seed search strategy leverages three well-known distance measures, i.e. Euclidean Distance, Cosine Similarity and Jaccard Index. Also, we have evaluated these three measures and compared the results with no search strategy. In the future, we still need to check more definitions of distance, like hamming distance, N-gram distance and so on, to find a better measurement for different execution paths (or different seed inputs). 
 
-\noindent\textit{\textbf{Sanity Check of Symbolic Pointer:}} When given a symbolic pointer, our LSP method will fork a pending state and then continue executing the program until the forking on a branch related to this pending state is failed. Then, we can improve the coverage by scheduling the pending state to generate a new test case. However, a symbolic pointer can point to multiple destinations, our LSP method only focuses on improving the following execution coverage, and because we perform a scale controlled symbolic execution, so we will kill this pending state after the execution is terminated and we will not generate all the possible test cases for this symbolic pointer. This will miss some interesting paths and even bug paths. So, it will be our future work to model the process memory map and then perform assertion checks when encountering with a pending state.
+\noindent\textit{\textbf{Sanity Check of Symbolic Pointer:}} When given a symbolic pointer, our LSP method will fork a pending state and then continue executing the program until a fork on a branch related to this pending state is failed. Then, we can improve the coverage by scheduling the pending state to generate a new test case. However, a symbolic pointer can point to multiple destinations, our LSP method only focuses on improving the following execution coverage, and because we perform a scale controlled symbolic execution, we will kill this pending state after the execution is terminated and not generate all the possible test cases for this symbolic pointer. This will miss some interesting paths and even bug paths. So, it will be our future work to model the process memory map and then perform assertion checks when encountering with a pending state.
+
+%TODO: Cannot speed up the software that have plain input format
+%TODO: The symbolic execution spend much more time than executing its with fuzz
 
 \section{Related Work}
 We have presented the major advantages of our method in the previous sections and compared our system with some state-of-the-art vulnerability discovery tools. In this section, we present the techniques that related to our method.

@@ -1,7 +1,7 @@
-The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed search methods on several real-world binary programs, and in bug finding, a demo program which contains several bugs, as well as another benchmark based on real-world program, are leveraged to demonstrate the ability of our prototype system on bug finding.
+The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed prioritization methods on several real-world binary programs, and in bug finding, a demo program which contains several bugs, as well as another benchmark based on real-world program, are leveraged to demonstrate the ability of our prototype system on bug finding.
 
 \subsection{Path Discovery}
-To evaluate the path discovery ability of the seed prioritization method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation was tested with one AFL node and lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have tested the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed prioritization strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.  
+To evaluate the path discovery ability of the seed prioritization method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation was tested with one AFL node and lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed prioritization strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.  
 
 \begin{table}
   \caption{\label{PD-8samples}Path discovery for 8 sample programs}
@@ -22,73 +22,63 @@ To evaluate the path discovery ability of the seed prioritization method, we sel
 	\end{tabular}
 \end{table}
 
-Figure~\ref{path-discovery} shows the normalized path discovery for these 8 programs based on the results in Table~\ref{PD-8samples}. From this figure, we can see that CS can achieve higher path coverage when comparing with other search strategies. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance overhead for some other benchmarks, like \texttt{tcpdump}.
+Figure~\ref{path-discovery} shows the normalized path discovery for these 8 programs based on the results in Table~\ref{PD-8samples}. From this figure, we can see that CS can achieve higher path coverage when comparing with other prioritization strategies. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance overhead for some other benchmarks, like \texttt{tcpdump}.
 
-An interesting point from Figure~\ref{path-discovery} is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because the input of \texttt{captone} is only plain texture file with some assembly code in it. This kind of input is not so well formatted the other inputs like ELF, JPEG, CAP and so on. And modifying any part of the input will have higher possibility to trigger new behaviors. So each seed file in the queue will have almost equal power to cover new code areas. 
+An interesting point from Figure~\ref{path-discovery} is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because, in our experiment, the input of \texttt{captone} was only plain texture file with some assembly code in it. Such kind of input is not so well formatted the other inputs like ELF, JPEG, CAP and so on. And modifying any parts of the input may have same possibility to trigger new behaviors which means each seed file in the queue will have nearly the same power to cover new code areas. This also demonstrates that our seed prioritization method will gain more performance for well-formatted inputs.
 
-Figure~\ref{path-detail} describes these four different search strategies for four different samples according to the test time, where the x-axis of each graph indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
+Figure~\ref{path-detail} describes these four different prioritization strategies for four different samples according to the test time, where the x-axis of each graph indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
+As shown in Figure~\ref{path-detail}, both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
 
-From Figure~\ref{path-detail}, both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
-
-Based on this result, we can see that cosine similarity based seed search strategy can touch more paths than other strategies. So we selected CS as our search strategy in the following bug finding evaluation.
-
+Based on this result, we can see that cosine similarity based seed prioritization strategy can touch more paths than other strategies. So we selected CS as our prioritization strategy in the following bug finding evaluation.
 \begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth]{figures/path-discovery.pdf} 
-\caption{Path Discovery for different search strategies.}\label{path-discovery}
-\end{figure}
-\begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth]{figures/path-time-detail.pdf} 
-\caption{Path Discovery for different search strategies within 24 hours.}\label{path-detail}
-\end{figure}
+%  \centering
+  \subfigure[Small Box]{
+	\includegraphics[width=0.5\textwidth, trim={0.4cm 0.5cm 0.3cm 0cm}, clip]{figures/path-discovery.pdf} 
+  }
+  \subfigure[Big Box]{
+	\includegraphics[width=0.48\textwidth, trim={1.3cm 0.8cm 1.5cm 0.5cm}, clip]{figures/path-time-detail.pdf} 
+	}
+  \caption{Path Discovery for different prioritization strategies.}
+\end{figure} 
+
 \subsection{Bug Finding}
-In this section, we evaluated our method with two different benchmarks. And we also compared the results of the other off-the-shelf vulnerability discovery tools, which are LibFuzzer, AFL, KLEE, S2E, and Driller.
+In this section, we evaluated our method with two different benchmarks. And we also compared the results of the other off-the-shelf vulnerability discovery tools, which are LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, and Driller.
 
-The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which is released in 2016 to test different vulnerability discovery tools. We will introduce the two benchmarks and the testing results in detail in the following.
+The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which is released in 2016 to test different vulnerability discovery tools \cite{dolan2016lava}. We will introduce the two benchmarks and the testing results in detail in the following.
 
-
-\subsubsection{CommonMB}~\par
-\vskip0.5mm
+\subsubsection{CommonMB}
 \noindent The \emph{CommonMB} benchmark is a demo program which contains 9 different memory error bugs. These bugs can be triggered only when feeding the program with specifically crafted input. There are four different kinds of functions in this benchmark, i.e. 2 compare-style functions, 3 math-style functions, 2 checksum-style functions and 2 logic-style functions. The compare functions contains bugs that can only be triggered when the values of specific parts of the input equal to specific constant immediate numbers; the bugs in math functions can be triggered when the results of math operation on some specific parts of the input equal to specific constant immediate numbers; the checksum related bugs can only be triggered when the input data successfully goes through the checksum checking points; and the logic bugs utilize two simple logical games (maze and semi-sudoku) as the constraints for triggering the bugs, which means the bugs can only be triggered when the testing engine successfully solves the games.
 
-Table~\ref{CommonMB-results} shows the overall results of different vulnerability discovery tools as well as our prototype with same test environment (10 cores and 24 hours). 
+Table~\ref{CommonMB-results-detail} shows the overall results of different vulnerability discovery tools as well as our prototype with same test environment (10 cores and 12 hours). 
+% Explain the result like that cmp-style vulnerabiities are easy to find
 
-Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results of our prototype on CommonMB benchmark. The first column lists the number of cores for the concolic execution engine, and we have tested from one core to 10 cores and collected the discovery time for each bug. 
+% Explain the result, for example, why add32 cannot be found by KLEE...
 
-\begin{table}
-  \caption{\label{CommonMB-results}Evaluation results on \textit{CommonMB}}
-  \centering
-	\begin{tabular}{p{2cm}<{\centering} p{2cm}<{\centering} p{3cm}<{\centering} p{3cm}<{\centering}}
-		\toprule
-		Tool                     & target   & method                  & Triggered Bugs\# \\ \midrule
-		AFL                      & Binary   & Fuzz                    & 3             \\
-		LibFuzzer                & Source   & Fuzz                    & 4             \\
-		KLEE                     & Source   & Symbex                  & 3             \\
-		S2E                      & Binary   & Symbex                  & 7             \\
-		Driller                  & Binary   & Symbex + Fuzz           & 5             \\
-		Prototype                & Binary   & Symbex + Fuzz           & 8             \\ \bottomrule
-	\end{tabular}
-\end{table}
+% Explain why S2E can find the crc16 and crc32 but cannot find maze
+
+% Explain why the sudodu is so hard to touch
+
+Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results of our prototype on \textit{CommonMB} benchmark. The first column lists the number of cores for the concolic execution engine, and we have tested from one core to 10 cores and collected the discovery time for each bug. 
 
 \begin{table}
   \caption{\label{CommonMB-results-detail}Evaluation results on \textit{CommonMB} in detail}
   \centering
-	\begin{tabular}{p{2cm}<{\centering} p{1cm}<{\centering} p{1cm}<{\centering} | p{1cm}<{\centering}
-	p{1cm}<{\centering} p{1.2cm}<{\centering} | p{1cm}<{\centering} p{1cm}<{\centering} | p{1cm}<{\centering} p{1cm}<{\centering}}
+	\begin{tabular}{p{1.5cm}<{\centering} | p{0.8cm}<{\centering} p{0.9cm}<{\centering} | p{0.7cm}<{\centering}
+	p{0.7cm}<{\centering} p{1.2cm}<{\centering} | p{0.8cm}<{\centering} p{0.8cm}<{\centering} | p{0.8cm}<{\centering} p{1cm}<{\centering} | p{1.2cm}<{\centering}}
 		\toprule
-	& \multicolumn{2}{c}{CMP}  & \multicolumn{3}{c}{MATH} & \multicolumn{2}{c}{CHECKSUM} & 	\multicolumn{2}{c}{LOGIC} \\ 
-	    Tool & cmp16 & cmp32 & add16 & add32 & complex & crc16 & crc32 & maze & sudoku \\
+	& \multicolumn{2}{c}{CMP}  & \multicolumn{3}{c}{MATH} & \multicolumn{2}{c}{CHECKSUM} & 	\multicolumn{2}{c}{LOGIC} & \\ 
+	    Tool & cmp16 & cmp32 & add16 & add32 & complex & crc16 & crc32 & maze & sudoku & Total(\#) \\
 		\midrule
-		AFL 		& Y & Y & Y & N & N & N & N & N & N \\
-		LibFuzzer	& Y & Y & Y & Y & N & N & N & N & N \\
-		KLEE		& Y & Y & Y & N & N & N & N & N & N \\
-		S2E			& Y & Y & Y & Y & Y & Y & Y & N & N \\
-		Driller		& Y & Y & Y & Y & Y & N & N & N & N \\
-		Prototype	& Y & Y & Y & Y & Y & Y & Y & Y & N \\
+		AFL 		& Y & Y & Y & N & N & N & N & N & N & 3 \\
+		LibFuzzer	& Y & Y & Y & Y & N & N & N & N & N & 4\\
+		KLEE		& Y & Y & Y & N & N & N & N & N & N & 3\\
+		S2E			& Y & Y & Y & Y & Y & Y & Y & N & N & 7\\
+		Driller		& Y & Y & Y & Y & Y & N & N & N & N & 5\\
+		Prototype	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
 	 \bottomrule
 	\end{tabular}
 \end{table}
+%TODO: Adjust this table value
 \begin{table}
 \centering
   \caption{\label{Prototype-result-CommonMB}Trigger time for each bug in \textit{CommonMB}  of our prototype (in \textit{second}).}
@@ -106,10 +96,9 @@ Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results o
 	\end{tabular}
 \end{table}
 
+%TODO: MORE analysis here
 
-
-\subsubsection{LAVA}~\par
-\vskip0.5mm
+\subsubsection{LAVA}
 \noindent In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automatically inject secure-related bugs into some Linux utilities for evaluating the bug-finding tools. These bugs are all hard-to-reach memory errors. In the paper of LAVA, the authors describe their results on the evaluation of coverage based fuzz testing, an SAT-based approach on the benchmark. The LAVA benchmark has two corpus sets, i.e. \textit{LAVA-1} and \textit{LAVA-M}.
 
 \textit{LAVA-1} injected 69 different bugs into the \texttt{file} program in Linux CoreUtils. There are two types of buffer overflow vulnerabilities were injected, one is \emph{Range} and the other one is \emph{Knob-and-trigger (KT)}. The Range style bugs trigger if the magic value is in some range and also check the value to determine how much to overflow. And in the KT bug, two bytes in the input are checked against a magic value to determine if the overflow will happen and another two bytes determine how much to overflow. Both the two types of bugs were designed to mirror real bug patterns which can be used to evaluate the ability of bug-finding tools. Compared \textit{LAVA-1}, which injected only one bug in the program, \textit{LAVA-M} injected more than one bug into four different programs in CoreUtils that took file input: \texttt{base64}, \texttt{md5sum}, \texttt{uniq}, and \texttt{who}, so \textit{LAVA-M} is a better benchmark to evaluate the vulnerability discovery tools that are designed to work for a long time on programs that may contain multiple bugs.
@@ -155,3 +144,7 @@ Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and 
 \end{table}
 
 As mentioned in the paper of LAVA, SES cannot find any bugs in \texttt{uniq} and \texttt{md5sum}. And the reasons are the control flow is too unconstrained in \texttt{uniq} and SES failed to execute any code past the first instance of the hash function. Because our symbolic execution is driven by a concrete seed input, so these two problems will be eased to a large extent which led to finding more bugs. Particularly, for program \texttt{md5sum}, VUzzer can only trigger one bug because it fails to get through the first crash to parse more of any input, whereas our prototype successfully triggered 29 bugs in \texttt{md5sum}.
+
+%TODO: Finding Unknown Bugs
+%\subsection{Unknown Bugs}
+% libav/libsvg

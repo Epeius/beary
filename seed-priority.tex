@@ -2,14 +2,14 @@
 
 As mentioned before, the size of the seed queue of coverage based evolutionary fuzz testing will quickly reach a large number when testing large-scale modern software. Mutating for each seed file will last for long time which will reduce the efficiency when given a time budget. 
 
-We realized that different seed files in the queue have different power of finding new paths. For example in Figure~\ref{motivate-example}, suppose the state space of a program is modeled as a two-dimensional space, and each input that triggers new behavior will be mapped to a specific point in the space. The fuzz test starts from an initial seed which is marked as red in this figure. The mutation results of this initial seed covers the black points as well as seed A and seed B. Then, in evolutionary fuzz testing, a test case will be picked up from such new paths as the seed file for next round of mutation. 
+We realized that different seed files in the queue have different power of finding new paths. For example in Figure~\ref{motivate-example}, suppose the state space of a program is modeled as a two-dimensional space, and each input that triggers new behavior will be mapped to a specific dot in the space. The fuzz test starts from an initial seed which is marked as red in this figure. The mutation results of this initial seed covers the black points as well as seed A and seed B. Then, in evolutionary fuzz testing, a test case will be picked up from such new paths as the seed file for next round of mutation. 
 
-Consider the choice between seed A and B in this figure, the \emph{distance}(eg. Euclidean Distance) from the initial seed file to A is much shorter than B, which, in other words, means that A is more \textbf{\textit{similar}} with the initial seed file than B. So choosing A as the next seed file to mutate will only trigger two new paths as most of the coverage are is (the blue area) overlapped with what of the initial seed file (the gray area). However, because seed B has a longer distance from the initial seed than seed A, and the coverage area of B (the brown area) will have less overlap with that of initial seed file than A. So choosing seed B will trigger more new behaviors than selecting seed A.
+Consider the choice between seed A and B in this figure, the \emph{distance}(eg. Euclidean Distance) from the initial seed file to A is much shorter than B, which, in other words, means that A is more \textbf{\textit{similar}} to the initial seed file than B. So choosing A as the next seed file to mutate will only trigger two new paths as most of the coverage are is (the blue area) overlapped with what of the initial seed file (the gray area). However, because seed B has a longer distance from the initial seed than seed A, and the coverage area of B (the brown area) will have less overlap with that of initial seed file than A. So choosing seed B will trigger more new behaviors than selecting seed A.
 
 
 Based on this insight, we proposed a test case prioritization method based on \emph{distance}. Our method leverages three distance measures in regression testing, i.e. \textit{Euclidean distance}, \textit{Cosine similarity} and \textit{Jaccard index}, as the classification metrics for test case prioritization. Each test case in the seed queue will be assigned with a \emph{weight} value after being mapped as a vector from input space to state space. The \emph{weigth} value is utilized as the criteria to determine which seed file should be scheduled as next seed through a global optimum solution.
 
-In the following sections, we firstly introduce these three similarity measures and then explain how a test case is mapped as a numerical vector. At last, the seed prioritization algorithm is described in detail as well as the distance calculation of the test case vectors.
+In the following sections, we firstly introduce these three similarity measures and then explain how a test case is mapped to a numerical vector. At last, the seed prioritization algorithm is described in detail as well as the distance calculation of the test case vectors.
 
 \begin{figure}
 \centering
@@ -79,7 +79,7 @@ Since our objective is to maximize the coverage in the state space, so we choose
 In \cite{wang2015similarity} all test cases are represented as a branch coverage vector $\mathit{V}=(v_1, v_2, \cdots, v_N)$, where $v_i$ is 0 means the branch is covered, otherwise 1. 
 However, different test cases can affect different branches, so the mapped vectors may have different lengths which cannot be used directly for distance calculation. Meanwhile, it will be very difficult to construct such vectors because it is hard to obtain all the branches and list them orderly in each vector to avoid obfuscation between vectors. 
 In AFL \cite{online:afl}, the execution path information of each test case is recorded into a \emph{Bitmap}. This \emph{Bitmap} is then used to determine whether a test case triggers new behaviors by comparing it with a global one. And the \emph{Bitmap} in AFL contains enough information to reflect the characteristics of a test case from the viewpoint of the state space. 
-So we selected the \emph{Bitmap} used in AFL as our mapped vector to mitigate the costly mapping as the list of ordered branches like \cite{wang2015similarity}.
+So we selected the \emph{Bitmap} used in AFL as our mapped vector to mitigate the costly mapping the list of ordered branches like \cite{wang2015similarity}.
 
 \begin{figure}
 \centering
@@ -89,7 +89,7 @@ So we selected the \emph{Bitmap} used in AFL as our mapped vector to mitigate th
 
 Based on the mapped bitmap vectors, the test case queue in the fuzzer is enhanced by assigning each test case with weight $W$ which is obtained from the distance between every two test cases. Whenever a new seed file is found, the distance between this seed file and all the other files in the queue will be measured to calculate $W$. And meanwhile, the weight of all the other files in the queue will be updated according to the distance to the new seed file. 
 
-Rather than selecting the seed file that has the longest distance to the current seed file which is only a \emph{local optimum solution}, our search method selects the file that takes the longest average distance from all the other test cases as the next seed file. By doing this, we can achieve the \emph{global optimum solution} for this searching problem. The weight $W$ for $t_k$ is defined as follows:
+Rather than selecting the seed file that has the longest distance to the current seed file which is only a \emph{local optimum solution}, our search method selects the file that takes the longest average distance from all the other test cases as the next seed file. By doing this, we can achieve the \emph{global optimum solution} for this searching problem. The weight $W$ for test case $t_k$ is defined as follows:
 
 \begin{center}
 $W_k = \displaystyle\frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
