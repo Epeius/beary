@@ -44,23 +44,23 @@ Fuzz testing is a popular method to discover the bugs and vulnerabilities in sof
 \section{Introduction}
 \input{Introduction.tex}
 
-\section{High Level Overview}
+\section{High Level Overview} \label{sec:HLO}
 \input{framework.tex}
 
-\section{Seed Prioritization for Fuzz Testing}
-\input{seed-priority.tex}
+%\section{Seed Prioritization for Fuzz Testing}
+%\input{seed-priority.tex}
 
-\section{Selective branch query} 
+\section{Selective branch query} \label{sec:method detail}
 \input{selective-assist.tex}
 
-\section{Implementation}
+\section{Implementation} \label{sec:imple}
 \input{Implementation.tex}
 
 
-\section{Evaluation}
+\section{Evaluation} \label{sec:evaluate}
 \input{Evaluation.tex}
 
-\section{Discussion}
+\section{Discussion} \label{sec:discussion}
 Our method is built on top of fuzz testing and symbolic execution, where we have introduced distance based seed search strategy, symbolic loop bucket, and lazy symbolic pointer. But there are still some drawbacks in our method, so in this section, we will discuss the limitations of our method and take a future look at the vulnerability discovery.
 
 \noindent\textit{\textbf{Distance Measure:}} Our seed search strategy leverages three well-known distance measures, i.e. Euclidean Distance, Cosine Similarity and Jaccard Index. Also, we have evaluated these three measures and compared the results with no search strategy. In the future, we still need to check more definitions of distance, like hamming distance, N-gram distance and so on, to find a better measurement for different execution paths (or different seed inputs). 
@@ -70,7 +70,7 @@ Our method is built on top of fuzz testing and symbolic execution, where we have
 %TODO: Cannot speed up the software that have plain input format
 %TODO: The symbolic execution spend much more time than executing its with fuzz
 
-\section{Related Work}
+\section{Related Work} \label{sec:related}
 We have presented the major advantages of our method in the previous sections and compared our system with some state-of-the-art vulnerability discovery tools. In this section, we present the techniques that related to our method.
 
 \noindent\textit{\textbf{Similarity Distance in Regression Testing:}}
@@ -79,7 +79,7 @@ Similarity based algorithms have been leveraged to regression test case prioriti
 \noindent\textit{\textbf{Combinational Testing Method:}}
 As mentioned before, our method is not the first tool to combine fuzz testing and symbolic execution. Hybrid Fuzz Testing uses symbolic execution to discover frontier nodes that represent unique paths in the program. After collecting as many frontier nodes as possible under a user-specifiable resource constraint, it transits to fuzz the program with random inputs. This tool focuses on binaries but only performs the one-time transition between symbolic execution and fuzz testing. Hybrid Concolic Testing implements multiple transitions between symbolic execution and fuzz testing. But because it is built on top of CUTE, a source code oriented testing tool, so hybrid concolic testing still cannot be deployed on binary testing directly. Driller is an up-to-date hybrid testing tool that leverages fuzz testing and concolic execution in a complementary manner to find deeper bugs. It is more practice when compared with previous hybrid tools. Some other tools try to make full use of symbolic execution to maximize the code coverage, they collect symbolic constraints placed on each input and then negating these constraints to generate a new test case that will take another uncovered path, such as SAGE, Dowser, FuzzWin etc. However, as these tools execute each input in the symbolic mode which determines that they have to face the path explosion problem. 
 
-\section{Conclusion}
+\section{Conclusion} \label{sec:conclusion}
 In this paper, we proposed a framework built on top of fuzz testing and symbolic execution to improve the performance of path discovery in vulnerability detection for binary executables. In order to achieve this, we introduced three key improvements, i.e. distance based seed search method, symbolic loop bucket and lazy symbolic pointer. The experiments on different benchmarks have shown that by introducing these three key improvements, our framework can find more paths and bugs when compared with other off-the-shelf vulnerability discovery tools. 
 
 \bibliography{biblio.bib}

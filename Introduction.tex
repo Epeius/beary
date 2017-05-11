@@ -1,41 +1,23 @@
-\begin{comment}
-1. What are the problems I want to solve/ease ?
-    Traditional fuzz testing is blind when testing complex and large-scale software. Coverage based fuzz testing makes traditional one smarter by mutating test cases that trigger new behaviors. 
-    
-    However, this still faces two problems:
-        i) For large software, the test case queue will become huge, so how to schedule the seed files to find more paths under the time budget?
-        
-        ii) For complex software, most bugs are deeply nested in some complex code areas. Using fuzz testing alone will be very hard to trigger such code. Hybrid testing, like using symbex to assist fuzz testing, will benefit from all the advantages and mitigate the disadvantages of the multiple methods. When using symbex, some program structures (sym-loops) and instructions (sym-pointer-derefs) will result huge number of useless states which will consume the test resources.
-        
-2. What is my solution(s) ? [1 para]
-    i) Distance based seed prioritization method
-    ii) SLB and LSP
-3. What are my contributions ? [1 para/ less than three items]
-    i) Proposed DSP method
-    ii) Proposed SLB and LSP
-4. What is the road map?
-    XXX
-\end{comment}
+Fuzz testing is the most popular automatic method to discover vulnerabilities in software. Many security vulnerabilities are found by fuzz testing every year. However, traditional fuzz testing can only discover bugs that exist on the shallow surface of programs. This is because that the fuzzers treat the target software as black box and feeds them with randomly generated input data. While the complex input formats in modern software determine that only a very small portion of the randomly generated test cases can trigger new behaviors of the target binary by touching new paths. So low efficiency is still the main bottleneck of fuzz testing when applying to real-world modern software. 
 
-Software errors and vulnerabilities have brought critical threat to not only individuals but also for the whole cyber security. Despite the software quality of software engineering has ever-increasing, many software vulnerabilities still can be found every year by researchers both in academia and industrial communities. 
+Coverage based fuzz testing collects all the test cases that trigger new behaviors into a seed file queue. All the test cases in this queue will be picked up as the template file for a new mutation generation. By utilizing such genetic method, the fuzzer can quickly touch more new paths and find more bugs than traditional fuzz testing. Even though this genetic method can cover more paths, the test case generation strategy (i.e randomly mutation) still cannot trigger the bugs that deeply nested in complex code areas.  
 
-Even though some software errors and vulnerabilities can be discovered manually, manual analysis is still not a scalable method for large-scale software. During the past several years, many automatic methods have been proposed to improve the dependability of software before and after software distribution, like source code auditing, fuzz testing, symbolic execution. However, all of these methods still need to solve some obstacles before they can be well applied to large-scale real-world software.
 
-Source code auditing is a powerful methodology for locating security vulnerabilities in source code \cite{Kuperman:Detection, Lee:audit, schmeelk2012standardizing}. However, the need to access source code prevents it from being deployed onto binary software testing to detect vulnerabilities in the released binary executables. The needs to access source code prevent it from being deployed onto binary software testing. And even though it can obtain more information from the source code than binary, it still cannot make sure there are no vulnerabilities in the released binary executables.
-Fuzz testing tires to automatically discover vulnerabilities by feeding the target program with a large amount of inputs \cite{Miller:Fuzz}. Fuzz testing can be easily applied both on source code and binary executables which makes it to be the most popular technique in the industrial community. Lots of security bugs have been found by fuzz testing. However, a large portion of released fuzzing tools treats the target software as a black box which simply feeding the target binaries with randomly generated test cases. The complex input formats in modern software determines only a very small portion of the randomly generated test cases can trigger new behaviors of the target binary by touching new paths. So the efficiency is the main bottle-neck of fuzz testing when testing real-world software.
+Some hybrid testing methods try to improve the efficiency of coverage based fuzz testing by employing the advantages of other program testing/analysis methods (i.e. symbolic execution and static analysis). 
+Leveraging symbolic execution has been proved to be a promising approach to improve the testing performance. Because symbolic execution can easily cover some \textit{corner cases} which is difficult for fuzzer to cover. Meanwhile, symbolic execution can also benefit from the seed files in the queue from fuzzer to quickly reach more \textit{wider} code areas. Driller, which is built on top of Angr symbolic execution engine and AFL fuzzing engine, has attempted to leverage symbolic execution to assist fuzz testing in exploring as many as paths \cite{stephens2016driller}. And its performance in the CGC challenge \cite{online:CGC} has been the great support for this hybrid testing approach.
 
-Symbolic execution is an analysis method to automatically generate an input that can drive some specific code region to be executed \cite{King:Symbex}. Symbolic execution interprets the target program by assigning symbolic data rather than concrete data to the program inputs and then uses SAT solvers to generate test cases that satisfy constraints obtained from program paths. However, the ``path explosion'' problem impedes symbolic execution from applying to real-world software \cite{Boonstoppel:RAP}. During the recent years, some improvements have been made to help symbolic execution to be adaptable to real-world testing, such as selective symbolic execution. Selective symbolic execution bounds the number of execution states though "elastically" expanding the program execution path \cite{chipounov2009selective, chipounov2011s2e}. Selective symbolic execution has eased the ``path explosion'' problem to some extent and made it possible for applying symbolic execution to real-world software. There are other symbolic execution tools have been developed such as EXE \cite{cadar2006exe}, KLEE \cite{cadar2008klee}, Mayhem \cite{cha2012unleashing}, Manticore \cite{online:manticore},and Angr \cite{shoshitaishvili2016sok}. 
+Even through the symbolic execution in hybrid testing can improve the efficiency of fuzz testing, the performance gain is still deeply affected by some program structures/instructions (like loops and symbolic pointers). Such structures will quickly generate lots of states that cannot trigger new behaviors but raise the intrinsic \textit{path explosion} problem of symbolic execution. 
 
-We realized that even the state-of-the-art effective technique base on program analysis is less efficient than black box fuzzing if the time spent generating a test case take relatively too long. Symbolic execution has to spend the most time on program analysis and constraint solving, while black box fuzzing only concentrate on random mutations. 
-In this paper, we aim to improve the performance of fuzz testing by adding two main features for fuzz testing. We proposed a distance based seed privatization strategy for fuzz testing to speed up the path discovery by selecting the most promising seed file to mutate, and we also leveraged symbolic execution to improve the code coverage of fuzz testing by selectively solving the branches which are guarded by complex conditions. And we also designed and implemented the prototype which is built on top of our method. Furthermore, some additional evaluations on different benchmarks are performed to demonstrate the ability of our methods.
- 
+Meanwhile, by leveraging symbolic execution, the seed queue of the fuzzer will quickly reach a large number for modern software. Mutation and symbolic execution on every seed file in the queue will last for a long time which may expire the budget testing time. So when given the testing time budget, the seed queue should be rearranged to make sure the test case that has greater probability to trigger new paths will be tested with high priority. 
+
+In this paper, we introduced two improvements to ease the \textit{path explosion} problem raised from the symbolic loops and symbolic pointers when using symbolic execution to assist coverage based fuzz testing. To address the large size of seed queue, we proposed a distance based seed privatization strategy for fuzz testing to speed up the path discovery by selecting the most promising seed file to mutate. 
+And we also designed and implemented the prototype which is built on top of our method. Furthermore, some additional evaluations on different benchmarks are performed to demonstrate the ability of our methods.
+
 In summary, this paper makes the following contributions.
 \begin{itemize}
-\item A \emph{distance based seed privatization} method is proposed to improve the path discovery.
+\item A \emph{symbolic loop bucket} method and a novel \emph{lazy symbolic pointer} method based on lazy forking are presented to ease the \emph{path explosion} problem when using symbolic execution to assist fuzz testing.
 
-\item A novel method based on lazy forking is presented to handle the \emph{symbolic pointers} when using symbolic execution to assist fuzz testing.
-
-\item We designed and built the prototype for our method to demonstrate our approaches.
-
-\item We evaluated our method and prototype on several benchmarks to demonstrate the performance from several different viewpoints.
+\item A \emph{distance based seed privatization} method is proposed to improve the path discovery when testing time is limited.
 \end{itemize}
+
+In the rest of the paper, we give the high level overview of our method (Section~\ref{sec:HLO}), present the details of our methodology (Section~\ref{sec:method detail}), give the implementation of our prototype (Section~\ref{sec:imple}), evaluate it (Section~\ref{sec:evaluate}), discuss the limitations (Section~\ref{sec:discussion}), survey the related work (Section~\ref{sec:related}), and conclude our work (Section~\ref{sec:conclusion}).
