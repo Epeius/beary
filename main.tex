@@ -41,17 +41,19 @@ Fuzz testing is a popular method to discover the bugs and vulnerabilities in sof
 \end{abstract}
 \textbf{Keywords.} Fuzz Testing; Symbolic Execution; Vulnerability; Hybrid Testing Method
 
-\section{Introduction}
+\section{Introduction} \label{sec:introduction}
 \input{Introduction.tex}
 
-\section{High Level Overview} \label{sec:HLO}
+\section{Methodology} \label{sec:methodology}
 \input{framework.tex}
 
-%\section{Seed Prioritization for Fuzz Testing}
-%\input{seed-priority.tex}
-
-\section{Selective branch query} \label{sec:method detail}
+\subsection{Easing path explosion by \textit{SLB} and \textit{LSP}}
 \input{selective-assist.tex}
+
+\subsection{Seed Prioritization}
+\input{seed-priority.tex}
+
+
 
 \section{Implementation} \label{sec:imple}
 \input{Implementation.tex}
