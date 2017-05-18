@@ -28,7 +28,6 @@ AFL utilizes \emph{Loop Bucket} mechanism to avoid collecting too many test case
 Loops are extracted from the target program by static analysis. These loops will be configured to symbolic execution engine to help it recognize loops in runtime. All the symbolic loops can be distinguished from the others by checking whether the loop exit condition is affected by symbolic data or not (Line 1$\sim$3). For the edge belong to symbolic loop, the uncovered loop buckets for this loop will be obtained by analyzing the \textit{Bitmap} mentioned before (Line 5). 
 State forking is disabled in already covered loop buckets, and the program will loop for one more time (Line 16\&17). Once an uncovered bucket is reached, the corresponding test case will be generated and then this uncovered bucket will be removed from the uncovered loop buckets to avoid generating multiple test cases (Line 7$\sim$12). After generating test cases for all the uncovered buckets, the loop will be prohibited from being executed for more times. This can make sure that all the loop buckets will be covered without coming across with the ``path explosion'' problem.
 
-%TODO: How about loop times is zero.
 %TODO: Refine the algorithm to demonstrate what if the concrete value is less/greater than 128.
 \begin{algorithm}
   \caption{Symbolic Loop Bucket}

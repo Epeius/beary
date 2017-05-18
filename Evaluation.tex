@@ -85,6 +85,7 @@ However, our prototype failed to trigger the bug in \textit{sudoku}. This is bec
 \end{table}
 
 \begin{comment}
+% List this time information is useless, then comment it.
 \begin{table}
 \centering
   \caption{\label{Prototype-result-CommonMB}Trigger time for each bug in \textit{CommonMB}  of our prototype (in \textit{second}).}
@@ -103,9 +104,7 @@ However, our prototype failed to trigger the bug in \textit{sudoku}. This is bec
 \end{table}
 \end{comment}
 
-%TODO: MORE analysis here
-
-\subsubsection{LAVA}
+\subsubsection{LAVA Benchmark}
 \noindent In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automatically inject secure-related bugs into some Linux utilities for evaluating the bug-finding tools. These bugs are all hard-to-reach memory errors. In the paper of LAVA, the authors describe their results on the evaluation of coverage based fuzz testing, an SAT-based approach on the benchmark. The LAVA benchmark has two corpus sets, i.e. \textit{LAVA-1} and \textit{LAVA-M}.
 
 \textit{LAVA-1} injected 69 different bugs into the \texttt{file} program in Linux CoreUtils. There are two types of buffer overflow vulnerabilities were injected, one is \emph{Range} and the other one is \emph{Knob-and-trigger (KT)}. The Range style bugs are triggered if the magic value is in some range and also check the value to determine how much to overflow. And in the KT bug, two bytes in the input are checked against a magic value to determine if the overflow will happen and another two bytes determine how much to overflow. Both the two types of bugs were designed to mirror real bug patterns which can be used to evaluate the ability of bug-finding tools. Compared \textit{LAVA-1}, which injected only one bug in the program, \textit{LAVA-M} injected more than one bug into four different programs in CoreUtils that took file input: \texttt{base64}, \texttt{md5sum}, \texttt{uniq}, and \texttt{who}, so \textit{LAVA-M} is a better benchmark to evaluate the vulnerability discovery tools that are designed to work for a long time on programs that may contain multiple bugs.
@@ -118,11 +117,11 @@ However, our prototype failed to trigger the bug in \textit{sudoku}. This is bec
 	    Tool & $2^0$ & $2^7$  & $2^{14}$ & $2^{21}$ & $2^{28}$ & KT \\
 	         & (12 bugs) & (10 bugs) & (11 bugs) & (14 bugs) & (12 bugs) & (10 bugs) \\
 		\midrule
-		FUZZER 		& 0 (0\%)   & 0 (0\%)    & 1 (9\%)    & 11 (79\%) & 9 (75\%)  & 2 20\%) \\
+		FUZZER 		& 0 (0\%)   & 0 (0\%)    & 1 (9\%)    & 11 (79\%) & 9 (75\%)  & 2 (20\%) \\
 		SES	        & 1 (8\%)   & 0 (0\%)    & 1 (9\%)    & 3 (21\%)  & 0 (0\%)   & 1 (10\%) \\
 		AFL		    & 0 (0\%)   & 0 (0\%)    & 2 (18\%)   & 10 (71\%) & 9 (75\%)  & 1 (10\%) \\
 		S2E			& 3 (25\%)  & 2 (20\%)   & 3 (27\%)   & 4 (27\%)  & 3 (25\%)  & 2 (20\%) \\
-		Driller		& 1 (8\%)   & 2 (20\%)   & 2 (18\%)   & 12 (86\%) & 10 (73\%) &  (10\%) \\
+		Driller		& 1 (8\%)   & 2 (20\%)   & 2 (18\%)   & 12 (86\%) & 10 (73\%) & 1 (10\%) \\
 		Prototype	& 10 (83\%) & 10 (100\%) & 11 (100\%) & 13 (93\%) & 11 (92\%) & 7 (70\%) \\
 	 \bottomrule
 	\end{tabular}
@@ -152,8 +151,32 @@ Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and 
 
 As mentioned in the paper of LAVA, SES cannot find any bugs in \texttt{uniq} and \texttt{md5sum}. And the reasons are the control flow is too unconstrained in \texttt{uniq} and SES failed to execute any code past the first instance of the hash function. Because our symbolic execution is driven by a concrete seed input, so these two problems will be eased to a large extent which led to finding more bugs. Particularly, for program \texttt{md5sum}, VUzzer can only trigger one bug because it fails to get through the first crash to parse more of any input, whereas our prototype successfully triggered 29 bugs in \texttt{md5sum}.
 
-%TODO: Finding Unknown Bugs
-\subsubsection{Zero-day Bugs}
-Actually we found ZERO 0-day bugs, WannaCRY! And our work is useless!!!
+\subsubsection{Unknown Bugs}
+We selected several real world programs to evaluate the ability of unknown bug discovery of our system. The input types of this dataset cover ELF binary, multi-media, image, and packet capture. In order to demonstrate the efficiency, we also compared our results with AFL and VUzzer. We ran each program under the same testing environment with one fuzzing node for 24 hours. 
 
-% libav/libsvg
+Table~\ref{zero-days} shows the results of the testing. 
+% Compare with AFL
+From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes). We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}).
+%TODO: Compare with VUzzer
+To be continue.
+ 
+\begin{table}
+  \caption{\label{zero-days}Zero day bugs found by our method.}
+  \centering
+	\begin{tabular}{l p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
+		\toprule
+		& & \multicolumn{3}{c}{Crashes (\#)} \\
+	    Program & Input & Prototype & AFL & VUzzer\\
+		\midrule
+		elfparser  & ELF	& 60  & 48    & ? \\
+%		dagger     & ELF    & 140 & 115   & ? \\
+		distorm    & ELF    & 13   & 0     & ? \\
+		mp3gain*	   & MPEG	& 43 & 41    & ? \\
+		madplay*    & WAV	& 55 & 54    & ? \\
+		optipng    & PNG    & 49  & 15    & ? \\
+		tstat      & PCAP   & 183  & 23    & ? \\
+		\hline
+		Total      &        & 403 & 181   & ?\\
+	 \bottomrule
+	\end{tabular}
+\end{table}
