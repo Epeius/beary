@@ -151,32 +151,31 @@ Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and 
 
 As mentioned in the paper of LAVA, SES cannot find any bugs in \texttt{uniq} and \texttt{md5sum}. And the reasons are the control flow is too unconstrained in \texttt{uniq} and SES failed to execute any code past the first instance of the hash function. Because our symbolic execution is driven by a concrete seed input, so these two problems will be eased to a large extent which led to finding more bugs. Particularly, for program \texttt{md5sum}, VUzzer can only trigger one bug because it fails to get through the first crash to parse more of any input, whereas our prototype successfully triggered 29 bugs in \texttt{md5sum}.
 
-\subsubsection{Unknown Bugs}
+\subsubsection{Real World Programs}
 We selected several real world programs to evaluate the ability of unknown bug discovery of our system. The input types of this dataset cover ELF binary, multi-media, image, and packet capture. In order to demonstrate the efficiency, we also compared our results with AFL and VUzzer. We ran each program under the same testing environment with one fuzzing node for 24 hours. 
 
 Table~\ref{zero-days} shows the results of the testing. 
 % Compare with AFL
-From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes). We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}).
-%TODO: Compare with VUzzer
-To be continue.
- 
+From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes) and VUzzer (192 unique crashes). We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
+This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain} than our prototype. 
+It is interesting that AFL detected 15 more bugs in \texttt{elfparser} than VUzzer. This is because the fork server method leveraged in AFL enables the fuzzer can execute 51.6x more test cases than VUzzer in the same time, which can also increase the probability of finding bugs.
+
 \begin{table}
   \caption{\label{zero-days}Zero day bugs found by our method.}
   \centering
-	\begin{tabular}{l p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
+	\begin{tabular}{l p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
 		\toprule
-		& & \multicolumn{3}{c}{Crashes (\#)} \\
-	    Program & Input & Prototype & AFL & VUzzer\\
+		& & \multicolumn{2}{c}{Prototype} & \multicolumn{2}{c}{AFL} & \multicolumn{2}{c}{VUzzer}\\
+	    Program & Input & Crashes (\#) & Executed (\#)& Crashes (\#) & Executed (\#) & Crashes (\#) & Executed (\#)\\
 		\midrule
-		elfparser  & ELF	& 60  & 48    & ? \\
-%		dagger     & ELF    & 140 & 115   & ? \\
-		distorm    & ELF    & 13   & 0     & ? \\
-		mp3gain*	   & MPEG	& 43 & 41    & ? \\
-		madplay*    & WAV	& 55 & 54    & ? \\
-		optipng    & PNG    & 49  & 15    & ? \\
-		tstat      & PCAP   & 183  & 23    & ? \\
+		elfparser  & ELF	& 60 &   1.1M & 48   & 1.0M   & 33 & 19.0K    \\
+		distorm    & ELF    & 13 &   16.2M   & 0   & 15.7M    & 3 & 93.1K    \\
+		mp3gain*   & MPEG	& 43 &   11.3M  & 41  &  11.7M   & 46 &  79.3K  \\
+		madplay*   & WAV	& 55 &   15.9M  & 54  & 14.3M    & 52 & 88.7K   \\
+		optipng    & PNG    & 49 &   9.5M & 15  &  10.1M   & 32 & 54.1K   \\
+		tstat      & PCAP   & 183&   6.4M & 23 &  6.2M   & 26 & 48.5K   \\
 		\hline
-		Total      &        & 403 & 181   & ?\\
+		Total      &        & 403   &  & 181 &  & 192 &\\
 	 \bottomrule
 	\end{tabular}
 \end{table}

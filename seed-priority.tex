@@ -14,10 +14,10 @@ In the following sections, we firstly introduce these three distance metrics and
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{figures/motivate-example.pdf} 
-\caption{An motivate example.}\label{motivate-example}
+\caption{A motivating example.}\label{motivate-example}
 \end{figure}
 
-\subsubsection{Distance Metrics}
+\subsection{Distance Metrics}
 For two vectors $\mathit{X} = (x_1, x_2, \cdots, x_N)$ and $\mathit{Y} = (y_1, y_2, \cdots, y_N)$, the corresponding similarity metrics for \textit{Euclidean Distance}, \textit{Cosine Similarity} and \textit{Jaccard Index} are listed as follows.
 
 \begin{enumerate}
@@ -60,7 +60,7 @@ $D(\mathit{X},\mathit{Y}) = 1 - JI(\mathit{X},\mathit{Y})$
 
 \end{enumerate}
 
-\subsubsection{Prioritizition Method}
+\subsection{Seed Selection Method}
 In order to measure the distances between test cases, all the test cases should be mapped to vector space. 
 The mapping can be performed both from input space and state space. However, mapping from input space cannot reflect the real relationship between test cases when considering the behavior of the target program. For example, as shown in Figure~\ref{distance-illusion}, multiple different inputs can steer the program to execute the same path. Specifically, considering the three test cases namely \texttt{A.jpeg}, \texttt{B.jpeg} and \texttt{C.jpeg} in this figure, suppose the corresponding contents are shown as follows:
 \\
