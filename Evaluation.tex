@@ -26,7 +26,6 @@ Figure~\ref{path-detail}(a) shows the normalized path discovery for these 8 prog
 
 An interesting point from Figure~\ref{path-detail}(a) is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because, in our experiment, the input of \texttt{captone} was only plain texture file with some assembly code in it. Such kind of input is not as well formatted as other inputs like ELF, JPEG, CAP and so on. And modifying any parts of the input may have same probability to trigger new behaviors which means each seed file in the queue will have nearly the same power to cover new code areas. This also demonstrates that our seed prioritization method will gain more performance for well-formatted inputs.
 
-%TODO: add Y-axis for (a) add XY-axis for (b)
 Figure~\ref{path-detail}(b) describes these four different selection strategies for four different samples according to the test time, where the x-axis indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
 As shown in Figure~\ref{path-detail}(b), both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
 
@@ -34,10 +33,10 @@ Based on this result, we can see that cosine similarity based seed selection str
 \begin{figure}
 %  \centering
   \subfigure[Normalized ressults for these four prioritization strategies.]{
-	\includegraphics[width=0.5\textwidth, trim={0.4cm 0.5cm 0.3cm 0cm}, clip]{figures/path-discovery.pdf} 
+	\includegraphics[width=0.48\textwidth, trim={0.2cm 0.4cm 0cm 0cm}, clip]{figures/path-discovery.pdf} 
   }
   \subfigure[Path discovery details along with 24 hours.]{
-	\includegraphics[width=0.48\textwidth, trim={1.3cm 0.8cm 1.5cm 0.5cm}, clip]{figures/path-time-detail.pdf} 
+	\includegraphics[width=0.48\textwidth, trim={0.5cm 0.1cm 1.5cm 0.8cm}, clip]{figures/path-time-detail.pdf} 
 	}
   \caption{Path Discovery for different prioritization strategies.}
   \label{path-detail}
