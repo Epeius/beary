@@ -18,7 +18,7 @@ To address the large size of seed queue, we proposed a distance based seed prior
 Each test case in seed queue is enhanced with an weight value which is obtained from the execution runtime information which includes path coverage and memory coverage.
 Our method prioritizes the seed queue according to this weight value and then selects the seed file with the greatest weight value for next mutation cycle.
 And we also designed and implemented the prototype which is built on top of our method. Figure~\ref{Framework} shows the high level framework of our prototype.
-Our main contributions consists of two main components, namely \emph{Concolic Path Finder} and \emph{Seacher}. The \emph{Concolic Path Finder} is leveraged to help the fuzzer to dive into deeper code areas that guarded by complex path constraints. Easing the \textit{path explosion} problem raised by symbolic pointers and loops is implemented inside of \emph{Concolic Path Finder}. The \emph{Searcher} is designed to select the most promising seed file from the seed queue based on the distance measurement. By doing this, the fuzzer will touch more virgin code areas as soon as possible in a time budget. 
+Our main contributions consists of two main components, namely \emph{Symbolic Path Finder} and \emph{Seacher}. The \emph{Symbolic Path Finder} is leveraged to help the fuzzer to dive into deeper code areas that guarded by complex path constraints. Easing the \textit{path explosion} problem raised by symbolic pointers and loops is implemented inside of \emph{Symbolic Path Finder}. The \emph{Searcher} is designed to select the most promising seed file from the seed queue based on the distance measurement. By doing this, the fuzzer will touch more virgin code areas as soon as possible in a time budget. 
 Furthermore, some additional evaluations on different benchmarks are performed to demonstrate the ability of our methods.
 \begin{figure}
 \centering
@@ -30,9 +30,9 @@ In summary, this paper makes the following contributions.
 \begin{itemize}
 \item A novel \emph{lazily concretization} method for symbolic pointers is proposed to cover new branches by avoid generating more states, we also present an optimization namely \emph{symbolic loop bucket} for symbolic loops to ease the \emph{path explosion} problem when using symbolic execution to assist fuzz testing.
 
-\item A \emph{distance based seed prioritization} method is proposed to select the most promising seed in the queue to improve path discovery when testing time is limited. 
+\item A \emph{distance based seed selection} method is proposed to select the most promising seed in the queue to improve path discovery when testing time is limited. 
 
 \item We implemented the prototype based on our method, and the evaluation results on several benchmarks demonstrate the ability of our method for different viewpoints.
 \end{itemize}
 
-The rest of this paper is organized as follows. Section~\ref{sec:ease PE} presents the technique details of how we deal with \textit{path explosion} raised from symbolic pointers and loops. The distance based seed selection is discussed in Section~\ref{sec:seed selection}. Section~\ref{sec:evaluate} describes the implementation of our prototype and the evaluation results. Section~\ref{sec:discussion} discusses the limitations of our work and possible counter measures. Section~\ref{sec:related} reviews the related work. Section~\ref{sec:conclusion} concludes this paper.
+The rest of this paper is organized as follows. Section~\ref{sec:ease PE} presents the technique details of how we deal with \textit{path explosion} raised from symbolic pointers and loops. The distance based seed selection method is discussed in Section~\ref{sec:seed selection}. Section~\ref{sec:evaluate} describes the implementation of our prototype and the evaluation results. Section~\ref{sec:discussion} discusses the limitations of our work and possible counter measures. Section~\ref{sec:related} reviews the related work, and Section~\ref{sec:conclusion} concludes this paper.

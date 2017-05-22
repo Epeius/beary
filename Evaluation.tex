@@ -1,7 +1,7 @@
-The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed prioritization methods on several real-world binary programs, and in bug finding, a demo program which contains several bugs, as well as another benchmark based on real-world program, are leveraged to demonstrate the ability of our prototype system.
+The evaluation of our prototype consists of two parts: path discovery and bug finding. In path discovery, we evaluated different seed selection methods on several real-world binary programs, and in bug finding, a demo program which contains several bugs, as well as another two benchmarks based on real-world programs, are leveraged to demonstrate the ability of our prototype system.
 
 \subsection{Path Discovery}
-To evaluate the path discovery ability of the seed prioritization method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation was tested with one AFL node and lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed prioritization strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.  
+To evaluate the path discovery ability of the seed selection method, we selected 8 programs which cover different input formats like executables, images, archives and network data. This evaluation lasted for 24 hours. The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed prioritization strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.  
 
 \begin{table}
   \caption{\label{PD-8samples}Path discovery for 8 sample programs}
@@ -22,14 +22,15 @@ To evaluate the path discovery ability of the seed prioritization method, we sel
 	\end{tabular}
 \end{table}
 
-Figure~\ref{path-detail}(a) shows the normalized path discovery for these 8 programs based on the results in Table~\ref{PD-8samples}. From this figure, we can see that CS can achieve higher path coverage when comparing with other distance measures. And EU can also cover more paths than vanilla AFL but the performance is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some benchmarks, like \texttt{readelf}, \texttt{djpeg}, but also brings performance overhead for some other benchmarks, like \texttt{tcpdump}.
+Figure~\ref{path-detail}(a) shows the normalized path discovery for these 8 programs based on the results in Table~\ref{PD-8samples}. From this figure, we can see that CS can achieve higher path coverage when comparing with other distance measures. And EU can also cover more paths than vanilla AFL but the performance gain is lower than CS. Compared with the other two distance measures, JI is the most unstable strategy which shows high path coverage for some programs, like \texttt{readelf}, \texttt{djpeg}, but also brings performance overhead for some others, such as \texttt{tcpdump}.
 
-An interesting point from Figure~\ref{path-detail}(a) is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because, in our experiment, the input of \texttt{captone} was only plain texture file with some assembly code in it. Such kind of input is not as well formatted as other inputs like ELF, JPEG, CAP and so on. And modifying any parts of the input may have same possibility to trigger new behaviors which means each seed file in the queue will have nearly the same power to cover new code areas. This also demonstrates that our seed prioritization method will gain more performance for well-formatted inputs.
+An interesting point from Figure~\ref{path-detail}(a) is that, for \texttt{capstone}, the gain of CS is not as significant as the other 7 programs (improved only by 8\%). This is because, in our experiment, the input of \texttt{captone} was only plain texture file with some assembly code in it. Such kind of input is not as well formatted as other inputs like ELF, JPEG, CAP and so on. And modifying any parts of the input may have same probability to trigger new behaviors which means each seed file in the queue will have nearly the same power to cover new code areas. This also demonstrates that our seed prioritization method will gain more performance for well-formatted inputs.
 
-Figure~\ref{path-detail}(b) describes these four different prioritization strategies for four different samples according to the test time, where the x-axis indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
+%TODO: add Y-axis for (a) add XY-axis for (b)
+Figure~\ref{path-detail}(b) describes these four different selection strategies for four different samples according to the test time, where the x-axis indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
 As shown in Figure~\ref{path-detail}(b), both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
 
-Based on this result, we can see that cosine similarity based seed prioritization strategy can touch more paths than other strategies. So we selected CS as our prioritization strategy in the following bug finding evaluation.
+Based on this result, we can see that cosine similarity based seed selection strategy can touch more paths than other strategies. So we selected CS as our selection strategy in the following bug finding evaluation.
 \begin{figure}
 %  \centering
   \subfigure[Normalized ressults for these four prioritization strategies.]{
@@ -155,13 +156,13 @@ As mentioned in the paper of LAVA, SES cannot find any bugs in \texttt{uniq} and
 We selected several real world programs to evaluate the ability of unknown bug discovery of our system. The input types of this dataset cover ELF binary, multi-media, image, and packet capture. In order to demonstrate the efficiency, we also compared our results with AFL and VUzzer. We ran each program under the same testing environment with one fuzzing node for 24 hours. 
 
 Table~\ref{zero-days} shows the results of the testing. 
-% Compare with AFL
-From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes) and VUzzer (192 unique crashes). We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
+From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes) and VUzzer (192 unique crashes). 
+We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
 This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain} than our prototype. 
 It is interesting that AFL detected 15 more bugs in \texttt{elfparser} than VUzzer. This is because the fork server method leveraged in AFL enables the fuzzer can execute 51.6x more test cases than VUzzer in the same time, which can also increase the probability of finding bugs.
 
 \begin{table}
-  \caption{\label{zero-days}Zero day bugs found by our method.}
+  \caption{\label{zero-days}Performance of Our method VS. AFL \& VUzzer on unknown crashes.}
   \centering
 	\begin{tabular}{l p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
 		\toprule
