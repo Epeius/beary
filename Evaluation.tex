@@ -61,10 +61,6 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
 % Explain why the sudodu is so hard to touch
 However, our prototype failed to trigger the bug in \textit{sudoku}. This is because different seed files of the \textit{sudoku} have no significant differences (i.e. no more path and memory coverage), which confuses our seed prioritization method.
 
-
-
-%Table~\ref{Prototype-result-CommonMB} shows the bug finding evaluation results of our prototype on \textit{CommonMB} benchmark. The first column lists the number of cores for the concolic execution engine, and we have tested from one core to 10 cores and collected the discovery time for each bug. 
-
 \begin{table}
   \caption{\label{CommonMB-results-detail}Evaluation results on \textit{CommonMB} in detail}
   \centering
