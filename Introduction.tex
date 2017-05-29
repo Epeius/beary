@@ -1,19 +1,19 @@
 
 
-Fuzz testing is a popular technique for automatic software vulnerability detection, 
-however it suffers from the low efficiency bottleneck when being applied to real-world software. 
+Fuzz testing is a popular technique for automatic software vulnerability detection \cite{Miller:Fuzz, 5010257, sutton2007fuzzing}, 
+however it suffers from the low efficiency bottleneck when being applied to real-world software \cite{neystadt2008automated, godefroid2008automating, ganesh2009taint, cadar2011symbolic, rawat2017vuzzer, stephens2016driller}. 
 This is because modern software has complex input formats, e.g., Portable Document Format (PDF), which determines that most of the test cases generated 
  by fuzz testing will be discarded on the shallow surface of programs. 
  Coverage based fuzz testing improves the performance of traditional fuzz testing 
  by collecting all test cases that contribute to coverage into a seed file queue, 
- and all the test cases in this queue will be picked up as the template file for a new cycle of mutation.
+ and all the test cases in this queue will be picked up as the template file for a new cycle of mutation \cite{rawat2017vuzzer, online:afl, stephens2016driller}.
  By utilizing such genetic method, 
  the fuzzer can quickly touch more new paths and find more bugs 
  than traditional fuzz testing. 
  However, treating the software as a gray box determines it still cannot trigger the bugs 
  that deeply nested in complex code areas.  
 
-Another technique to improve the efficiency of fuzz testing is symbolic execution assisted hybrid testing.
+Another technique to improve the efficiency of fuzz testing is symbolic execution assisted hybrid testing \cite{yeh2015craxfuzz, majumdar2007hybrid, pak2012hybrid}.
  In such hybrid testing, symbolic execution is exploited to cover the corner cases that are difficult for classical fuzzers to cover by solving the corresponding path conditions.
  Meanwhile, symbolic execution can also benefit from the seed files in the queue from fuzzer 
  to quickly reach more wider code areas. 
@@ -23,7 +23,7 @@ Another technique to improve the efficiency of fuzz testing is symbolic executio
  And its performance in the CGC challenge \cite{online:CGC} demonstrates the potential of this hybrid testing approach.
 
 However, the performance gain from symbolic execution in hybrid testing is still limited 
- by some program structures(e.g., symbolic pointers and loops). 
+ by some program structures(e.g., symbolic pointers and loops) \cite{Boonstoppel:RAP, cadar2011symbolic, baldoni2016survey}. 
  Such structures will quickly generate many states that cannot trigger new behaviors 
  but raise the intrinsic \textit{path explosion} problem of symbolic execution.
  Moreover, by leveraging symbolic execution, 
@@ -43,12 +43,12 @@ In this paper, we propose two advanced techniques to improve the efficiency of s
  then selects the seed file with the greatest weight value for next mutation cycle.
  And we also designed and implemented the prototype which is built on top of our method. 
  Figure~\ref{Framework} shows the high level framework of our prototype.
- Our main contributions consist of two main components, namely \emph{Symbolic Path Finder} and \emph{Seacher}. 
- The \emph{Symbolic Path Finder} is leveraged to help the fuzzer to dive into deeper code areas 
+ Our main contributions consist of two main components, namely \emph{Symbolic Path Finder (SPF)} and \emph{Seacher}. 
+ The \emph{SPF} component is leveraged to help the fuzzer to dive into deeper code areas 
  that are guarded by complex path constraints. 
  Technique to handle the \textit{path explosion} problem 
  raised by symbolic pointers and loops 
- is implemented inside of \emph{Symbolic Path Finder}. 
+ is implemented inside of \emph{SPF}. 
  The \emph{Searcher} is designed to select the most promising seed file 
  from the seed queue based on the distance measurement. 
  By doing this, the fuzzer will touch more virgin code areas as soon as possible in a time budget. 
