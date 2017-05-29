@@ -1,0 +1,27 @@
+%Preliminaries of symbolic execution and hybrid testing
+To present the concept of symbolic execution and hybrid testing, we provide an example in Listing~\ref{PRE} \footnote{All the example code in this paper are listed as source code to make them more clear.}.
+ In this example, the program reads and checks the members of the header from an input file. A crash happens when the program reaches Line 23. 
+ Obviously, fuzz testing will get stuck at Line 17 because of the complex branch condition.
+
+\subsection{Symbolic Execution}
+Symbolic execution is an analysis method to determine what input can drive the specific code region to execute \cite{King:Symbex}. Symbolic execution interprets the program by assigning symbolic data rather than actual data to the program inputs. 
+
+\lstinputlisting[label={PRE}, language=C,style=c,caption={A motivating code for preliminaries.}]{codes/pre.c} 
+
+The structure pointed by \texttt{header} at Line 8 in Listing~\ref{PRE} will be marked as symbolic data in symbolic execution.
+ Suppose the initial input has a bad magic number, 
+ then when the program tries to verify the magic number at Line 13, 
+ the symbolic execution will fork a new state with correct magic number by solving $s_{magic} == 0xFFD8$ with an SMT solver \cite{brummayer2009boolector, de2008z3}, where $s_{magic}$ represents the symbolic data of \texttt{header->magic}. 
+ After this, the new state will continue executing and, similarly, the checking at Line 17 will be solved by the engine. 
+ 
+ However, function \texttt{path\_explosion} at Line 21 prevents symbolic execution from executing deeper code areas. 
+ As a consequence, the bug at Line 23 will be difficult to for symbolic execution tools to trigger.
+
+\subsection{Hybrid Testing}
+The basic framework of hybrid testing approach based on fuzz testing and symbolic execution is shown in Figure~\ref{s2e-assist}. The fuzzing engine shares the internal information, which is used to record the path information (such as the \textit{Bitmap} in AFL), with the symbolic execution engine. 
+Each test case in the seed queue will be sent to symbolic execution engine to uncover more new paths. 
+Unlike traditional unlimited symbolic execution, the engine in hybrid testing method tries to limit the number of states forked into an acceptable scale. For example, as shown in Figure~\ref{s2e-assist}, suppose the red execution trace is the path which the seed file will taken, the symbolic execution engine only forks new states when it finds uncovered branches (the blue branches) according to the shared internal information from fuzzing engine. And these forked states from the blue branches will be prohibited from forking more new states once the total number of states reaches the budget. And each forked state will generate a new test case which can help fuzzing engine to touch more new code areas. 
+
+Based on this hybrid testing method, the verification of \texttt{header->checksum} at Line 17 can be solved by symbolic execution engine and generate a new test case for further fuzzing.
+ The pain raised from function \texttt{path\_explosion} will be eased since fuzzing is performed concretely. 
+ And the bug at Line 23 can be quickly triggered by solving \texttt{$S_{flag}$ == CRASH} with symbolic execution engine.

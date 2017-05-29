@@ -39,6 +39,9 @@ We also proposed a distance based seed selection method to rearrange the seed qu
 \section{Introduction} \label{sec:introduction}
 \input{Introduction.tex}
 
+\section{Preliminaries} \label{sec:preliminaries}
+\input{Preliminaries.tex}
+
 \section{Easing Path Explosion in \textit{SPF}} \label{sec:ease PE}
 \input{selective-assist.tex}
 
@@ -59,7 +62,7 @@ Our method is built on top of fuzz testing and symbolic execution, where we have
 
 \noindent\textit{\textbf{Float Point Operation:}} The symbolic execution engine we depend on will concretize symbolic write operations to \texttt{XMM} registers, which will lose some interesting paths when handling float point arithmetic operations. This problem happens for most of the MEPG process programs. So the symbolic execution engine should be upgraded to support float point arithmetic operations well in the future.
 
-\noindent\textit{\textbf{Sanity Check of Symbolic Pointer:}} When given a symbolic pointer, our LSP method will fork a pending state and then continue executing the program until a fork on a branch related to this pending state is failed. Then, we can improve the coverage by scheduling the pending state to generate a new test case. However, a symbolic pointer can point to multiple destinations, our LSP method only focuses on improving the following execution coverage, and because we perform a scale controlled symbolic execution, we will kill this pending state after the execution is terminated and not generate all the possible test cases for this symbolic pointer. This will miss some interesting paths and even bug paths. So, it will be our future work to model the process memory map and then perform assertion checks when encountering with a pending state.
+\noindent\textit{\textbf{Sanity Check of Symbolic Pointer:}} When given a symbolic pointer, our LCSP method will fork a pending state and then continue executing the program until a fork on a branch related to this pending state is failed. Then, we can improve the coverage by scheduling the pending state to generate a new test case. However, a symbolic pointer can point to multiple destinations, our LCSP method only focuses on improving the following execution coverage, and because we perform a scale controlled symbolic execution, we will kill this pending state after the execution is terminated and not generate all the possible test cases for this symbolic pointer. This will miss some interesting paths and even bug paths. So, it will be our future work to model the process memory map and then perform assertion checks when encountering with a pending state.
 
 \section{Related Work} \label{sec:related}
 We have presented the major advantages of our method in the previous sections and compared our system with some state-of-the-art vulnerability discovery tools. In this section, we present the techniques that related to our method.
@@ -67,7 +70,7 @@ We have presented the major advantages of our method in the previous sections an
 \noindent\textit{\textbf{Similarity Distance in Regression Testing:}}
 Similarity based algorithms have been leveraged to regression test case prioritization. Test case prioritization issue is a hot research topic in regression testing research, which tries to optimum mutation schedule based on a specific prioritization criterion. Rothermel et, al. proposed fine-grained prioritization strategy based on the instruction coverage and branch coverage. Then Elbaum et, al. concentrated on function level coverage and they proved that this kind of coarse-grained instrumentation which can reduce the execution overhead but will lose some prioritization performance. Krishna et al. utilized Levenshtein distance as the criterion of prioritization. Rather than using an ordered branch sequence to present the path in [XX], we represented the execution path by using the bitmap in AFL, which is more practical and efficiency.
 
-\noindent\textit{\textbf{Combinational Testing Method:}}
+\noindent\textit{\textbf{Hybrid Testing Method:}}
 As mentioned before, our method is not the first tool to combine fuzz testing and symbolic execution. Hybrid Fuzz Testing uses symbolic execution to discover frontier nodes that represent unique paths in the program. After collecting as many frontier nodes as possible under a user-specifiable resource constraint, it transits to fuzz the program with random inputs. This tool focuses on binaries but only performs the one-time transition between symbolic execution and fuzz testing. Hybrid Concolic Testing implements multiple transitions between symbolic execution and fuzz testing. But because it is built on top of CUTE, a source code oriented testing tool, so hybrid concolic testing still cannot be deployed on binary testing directly. Driller is an up-to-date hybrid testing tool that leverages fuzz testing and concolic execution in a complementary manner to find deeper bugs. It is more practice when compared with previous hybrid tools. Some other tools try to make full use of symbolic execution to maximize the code coverage, they collect symbolic constraints placed on each input and then negating these constraints to generate a new test case that will take another uncovered path, such as SAGE, Dowser, FuzzWin etc. However, as these tools execute each input in the symbolic mode which determines that they have to face the path explosion problem. 
 
 \section{Conclusion} \label{sec:conclusion}

@@ -1,8 +1,4 @@
-The basic framework of hybrid testing approach based on fuzz testing and symbolic execution is shown in Figure~\ref{s2e-assist}. The fuzzing engine shares the internal information, which is used to record the path information (such as the \textit{Bitmap} in AFL), with the symbolic execution engine. 
-Each test case in the seed queue will be sent to symbolic execution engine to uncover more new paths. 
-Unlike traditional unlimited symbolic execution, the engine in hybrid testing method tries to limit the number of states forked into an acceptable scale. For example, as shown in Figure~\ref{s2e-assist}, suppose the red execution trace is the path which the seed file will taken, the symbolic execution engine only forks new states when it finds uncovered branches (the blue branches) according to the shared internal information from fuzzing engine. And these forked states from the blue branches will be prohibited from forking more new states once the total number of states reaches the budget. And Each forked state will generate a new test case which can help fuzzing engine to touch more new code areas. 
-
-This can help to reduce the memory overhead by limiting the number of states to an acceptable level. However, as mentioned in Section~\ref{sec:introduction}, symbolic pointers and loops will quickly generate lots of useless states that may not increase the coverage but take too much proportion of the states budget.
+Hybrid testing method can help to reduce the memory overhead by limiting the number of states to an acceptable level. However, as mentioned in Section~\ref{sec:introduction}, symbolic pointers and loops will quickly generate lots of useless states that may not increase the coverage but take too much proportion of the states budget.
 
 To address the large number of states forked from symbolic pointers, we proposed a novel \textit{lazily concretization} of symbolic pointers which can not only reduce the number of states but also guarantee the coverage. 
 For symbolic loops, we introduced an optimization (i.e., \textit{symbolic loop bucket}) based on the loop bucket in AFL to control the forking in symbolic loops. By doing this, the execution can go through the symbolic loops and penetrate into deeper code areas.
@@ -11,7 +7,7 @@ Both of the two improvements will be discussed in the following sections in deta
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{figures/s2e-assist.pdf} 
-\caption{Assist fuzz testing with concolic execution.}\label{s2e-assist}
+\caption{Assist fuzz testing with symbolic execution.}\label{s2e-assist}
 \end{figure}
 
 \subsection{Lazy Concretization of Symbolic Pointer}
