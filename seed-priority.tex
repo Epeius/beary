@@ -82,7 +82,7 @@ In AFL \cite{online:afl}, the execution path information of each test case is st
 
 \begin{figure}
 \centering
-\includegraphics[width=0.5\textwidth]{figures/distance-illusion.pdf} 
+\includegraphics[width=0.4\textwidth]{figures/distance-illusion.pdf} 
 \caption{An illusion for distance.}\label{distance-illusion}
 \end{figure}
 
@@ -95,8 +95,9 @@ $W_k = \displaystyle\frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
 \end{center}
 where $D(t_i, t_k)$ denotes the distance between $t_i$ and $t_k$ based on the three distance measures mentioned before, and $N$ is the size of the test case queue. 
 
-% Add memory coverage information
-We also noticed that even two test cases have the same $W$ value, they can contribute different new paths. This is because path coverage is not the only criteria for testing, and other runtime information, such as memory operations, can also be leveraged to prioritize test cases. So we enhanced the weigh $W$ with memory coverage to achieve better prioritization result. The enhanced weight $\hat{W_k}$ for test case $t_k$ is defined as the following formula, where $M(t_k)$ denotes the number of memory cells that $t_k$ covers in byte.
+We also noticed that even two test cases have the same $W$ value, they may have different power on finding new paths.
+ This is because path coverage is not the only criteria for testing, and other runtime information, such as memory operations, can also be leveraged to prioritize test cases. 
+ So we enhanced the weigh $W$ with memory coverage to achieve better prioritization result. The enhanced weight $\hat{W_k}$ for test case $t_k$ is defined as the following formula, where $M(t_k)$ denotes the number of memory cells that $t_k$ covers in byte.
 \begin{center}
 $\hat{W_k} = \displaystyle M(t_k) + \frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
 \end{center} 
