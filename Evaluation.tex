@@ -1,12 +1,12 @@
 The evaluation of our prototype consists of two parts: \textbf{\emph{path discovery}} and \textbf{\emph{bug finding}}. 
- Path discovery is devised to evaluate our distance based seed selection on several real-world binary programs, and \textit{SPF} component is disabled to illustrate more clearly. 
+ Path discovery is devised to evaluate the distance based seed selection on several real-world binary programs, and \textit{SPF} component is disabled to illustrate more clearly. 
  In bug finding, a demo program which contains several bugs, as well as another two benchmarks based on real-world programs, are leveraged to demonstrate the capability of the whole prototype system (i.e., both \textit{Searcher} and \textit{SPF} are enabled).
 
 %TODO: experimental setups, including the OS, RAM, and CPUs.
 
 \subsection{Path Discovery}
 To evaluate the path discovery ability of our prototype, we selected 8 programs which cover different input formats like executables, images, archives and network data. And the evaluation lasted for 24 hours.
-The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e. EU, CS, and JI) as well as the original seed selection strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.
+The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e., EU, CS, and JI) as well as the original seed selection strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.
 
 \begin{table}
   \caption{\label{PD-8samples}Path discovery for 8 sample programs}
@@ -51,15 +51,15 @@ Based on this result, we can see that cosine similarity based seed selection str
 We evaluated the bug discovery ability of our method with two different benchmarks and some real world software. The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which is released in 2016 to test different vulnerability discovery tools \cite{dolan2016lava}. In the following sections, we are going to introduce the two benchmarks, and discuss the testing results of our prototype as well as other off-the-shelf vulnerability discovery tools (LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
 
 \subsubsection{CommonMB}
-\noindent The \emph{CommonMB} benchmark is a demo program which contains 9 different memory error bugs. These bugs can be triggered only when feeding the program with specifically crafted input. There are four different kinds of functions in this benchmark, i.e. 2 compare-style functions, 3 math-style functions, 2 checksum-style functions and 2 logic-style functions. The compare functions contains bugs that can only be triggered when the values of specific parts of the input equal to specific constant immediate numbers; the bugs in math functions can be triggered when the results of math operation on some specific parts of the input equal to specific constant immediate numbers; the checksum related bugs can only be triggered when the input data successfully goes through the checksum checking points; and the logic bugs utilize two simple logical games (maze and semi-sudoku) as the constraints for triggering the bugs, which means the bugs can only be triggered when the testing engine successfully solves the games.
+\noindent The \emph{CommonMB} benchmark is a demo program which contains 9 different memory error bugs. These bugs can be triggered only when feeding the program with specifically crafted input. There are four different kinds of functions in this benchmark, i.e., 2 compare-style functions, 3 math-style functions, 2 checksum-style functions and 2 logic-style functions. The compare functions contains bugs that can only be triggered when the values of specific parts of the input equal to specific constant immediate numbers; the bugs in math functions can be triggered when the results of math operation on some specific parts of the input equal to specific constant immediate numbers; the checksum related bugs can only be triggered when the input data successfully goes through the checksum checking points; and the logic bugs utilize two simple logical games (maze and semi-sudoku) as the constraints for triggering the bugs, which means the bugs can only be triggered when the testing engine successfully solves the games.
 
 Table~\ref{CommonMB-results-detail} shows the overall results of different vulnerability discovery tools as well as our prototype with same test environment (10 cores and 12 hours).
 % Explain the result like that cmp-style vulnerabiities are easy to find
-We can see that all these tools have successfully triggered the two compare-style bugs (i.e. \textit{cmp16} and \textit{cmp32}). This is because there two functions are in the shallow surface of this benchmark and the conditions to trigger the bugs are simpler than the others.  
+We can see that all these tools have successfully triggered the two compare-style bugs (i.e., \textit{cmp16} and \textit{cmp32}). This is because there two functions are in the shallow surface of this benchmark and the conditions to trigger the bugs are simpler than the others.  
 
 % Explain the result, for example, why add32 cannot be found by KLEE...
 Fuzz testing tools discovered few math-bugs than symbolic execution tools in average.
- For example, AFL discovered the \textit{add16} and LibFuzzer triggered one more bug (i.e. \textit{add32}). 
+ For example, AFL discovered the \textit{add16} and LibFuzzer triggered one more bug (i.e., \textit{add32}). 
  And these two fuzzer both failed to uncover the bug that guarded by complex mathematic operations. 
  All tools that leverage symbolic execution except KLEE successfully triggered all these three bugs since symbolic execution is good at solving such corner cases. 
  One interesting point in this table is that KLEE failed to trigger \textit{add32} and \textit{complex} bugs. 
@@ -73,7 +73,7 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
  With the help of our seed selection method, our prototype selected the seed file with the maximum average distance to schedule. Since this distance metric tries to maximize the memory coverage, our prototype successfully triggered the bug after covering all the memory access to the maze array. 
 % Explain why the sudodu is so hard to touch
  However, our prototype failed to trigger the bug in \textit{sudoku}. 
- This is because different seed files of the \textit{sudoku} have no significant differences (i.e. no more path and memory coverage), which confuses our seed selection method.
+ This is because different seed files of the \textit{sudoku} have no significant differences (i.e., no more path and memory coverage), which confuses our seed selection method.
 
 \begin{table}
   \caption{\label{CommonMB-results-detail}Evaluation results on \textit{CommonMB} in detail}
@@ -115,7 +115,7 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
 \end{comment}
 
 \subsubsection{LAVA Benchmark}
-\noindent In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automatically inject secure-related bugs into some Linux utilities for evaluating the bug-finding tools \cite{dolan2016lava}. These bugs are all hard-to-reach memory errors. In the paper of LAVA, the authors describe their results on the evaluation of coverage based fuzz testing, an SAT-based approach on the benchmark. The LAVA benchmark has two corpus sets, i.e. \textit{LAVA-1} and \textit{LAVA-M}.
+\noindent In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automatically inject secure-related bugs into some Linux utilities for evaluating the bug-finding tools \cite{dolan2016lava}. These bugs are all hard-to-reach memory errors. In the paper of LAVA, the authors describe their results on the evaluation of coverage based fuzz testing, an SAT-based approach on the benchmark. The LAVA benchmark has two corpus sets, i.e., \textit{LAVA-1} and \textit{LAVA-M}.
 
 \textit{LAVA-1} injected 69 different bugs into the \texttt{file} program in Linux CoreUtils. There are two types of buffer overflow vulnerabilities were injected, one is \emph{Range} and the other one is \emph{Knob-and-trigger (KT)}. The Range style bugs are triggered if the magic value is in some range and also check the value to determine how much to overflow. And in the KT bug, two bytes in the input are checked against a magic value to determine if the overflow will happen and another two bytes determine how much to overflow. Both the two types of bugs were designed to mirror real bug patterns which can be used to evaluate the ability of bug-finding tools. Compared \textit{LAVA-1}, which injected only one bug in the program, \textit{LAVA-M} injected more than one bug into four different programs in CoreUtils that took file input: \texttt{base64}, \texttt{md5sum}, \texttt{uniq}, and \texttt{who}, so \textit{LAVA-M} is a better benchmark to evaluate the vulnerability discovery tools that are designed to work for a long time on programs that may contain multiple bugs.
 
@@ -139,7 +139,7 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
 
 Table~\ref{LAVA-1} summarized the results of bug finding evaluation on \textit{LAVA-1} from LAVA paper as well as some popular off-the-shelf tools (AFL/S2E/Driller). The maximum testing time for each bug was five hours. From this table, we can see that the \textbf{FUZZER} and \textbf{SES} mentioned in the paper only found 23 bugs and 6 bugs respectively in total. AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) but it outperformed S2E in larger ranges. Driller leverages the advantages of both fuzz testing and symbolic execution and the results show that it can find more paths than using them separately (28 bugs were discovered in total).
 
-Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. Particularly, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. Meanwhile, because of the two improvements (i.e. \textit{SLB} and \textit{LSP}), our prototype can also trigger more bugs than Driller.
+Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. Particularly, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. Meanwhile, because of the two improvements (i.e., \textit{SLB} and \textit{LSP}), our prototype can also trigger more bugs than Driller.
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and SES which are mentioned in the LAVA paper. We also listed the results of VUzzer and our prototype in this table. 
 
