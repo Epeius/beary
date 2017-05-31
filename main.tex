@@ -21,18 +21,21 @@
 \usepackage{color}
 \usepackage[lined, linesnumbered, boxed, ruled, commentsnumbered]{algorithm2e}
 
-
 \begin{document}
 \title{Making Fuzz Testing Smart Again}
 \author{Bin Zhang}
 \maketitle
 
 \begin{abstract}
-Coverage based fuzz testing and symbolic execution are both popular program testing techniques in the security research community. However, both of them suffer from scalable problems when considering the size and complexity of modern software. Hybrid testing methods mitigate the scalability problem by leveraging symbolic execution to help generate corner test cases for fuzz testing. Although symbolic execution is guaranteed to cover all possible paths theoretically, it still cannot deal well with some specific program structures. Meanwhile, the size of the seed queue of coverage based fuzz testing will become larger with the help of symbolic execution. The seed queue should be rearranged to improve the coverage when given the testing time budget.
+Coverage based fuzz testing and symbolic execution are both popular program testing techniques in the security research community. However, both of them suffer from scalability problems when considering the size and complexity of modern software. Hybrid testing methods mitigate the scalability problem by leveraging symbolic execution to help generate corner test cases for fuzz testing. Although symbolic execution is guaranteed to cover all possible paths theoretically, it still cannot deal well with some specific program structures. Meanwhile, the size of the seed queue of coverage based fuzz testing will become larger with the help of symbolic execution. The seed queue should be rearranged to improve the coverage when given the testing time budget.
+
 
 In this paper, we introduced two improvements to ease the path explosion problem raised by symbolic execution in hybrid testing method. 
-These two improvements focus on symbolic pointers and loops and present a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization. 
-We also proposed a distance based seed selection method to rearrange the seed queue of coverage based fuzz testing to achieve higher coverage in the time budget. We implemented a prototype and the experimental results on several benchmarks demonstrate the efficiency of our method from different viewpoints.
+ These two improvements focus on symbolic pointers and loops and present a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization. 
+ We also proposed a distance based seed selection method to rearrange the seed queue of coverage based fuzz testing to achieve higher coverage in the time budget. 
+ We implemented a prototype and evaluated it from two viewpoints: path discovery and bug finding.
+ The experimental results show that the seed selection method can improve path coverage by 34.3\%. And the evaluation results on three different benchmarks, a demo program, recently released LAVA benchmark, and some real-world programs on Unix, show that our prototype can trigger more crashes than some off-the-shelf vulnerability detection tools in all of these three benchmarks. 
+
 \end{abstract}
 \textbf{Keywords.} Fuzz Testing; Symbolic Execution; Software Vulnerability; Hybrid Testing
 

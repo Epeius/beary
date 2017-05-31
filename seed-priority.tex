@@ -1,8 +1,5 @@
 As mentioned before, the size of the seed queue of coverage based evolutionary fuzz testing will quickly reach a large number (especially with the assistance of symbolic execution) when testing large-scale modern software. The seed queue should be rearranged to make sure we can find more paths when given the time budget.
 
-%TODO: Add the legend of the coverage area of initial seed file in the figure
-
-%TODO: Add maximize memory coverage
 We realized that different seed files in the queue have different power of finding new paths. For example in Figure~\ref{motivate-example}, suppose the state space of a program is modeled as a two-dimensional space, and each input that triggers new behavior will be mapped to a specific dot in the space. The fuzz test starts from an initial seed which is marked as red in this figure. The mutation results of this initial seed cover the black points as well as seed A and seed B. Then, in evolutionary fuzz testing, a test case will be picked up as the seed file for next round of mutation. 
 Consider the choice between seed A and B in this figure, the \emph{distance}(eg. Euclidean Distance) from the initial seed file to A is much shorter than B, which, in other words, means that A is more \textbf{\textit{similar}} to the initial seed file than B. So choosing A as the next seed file to mutate will only trigger two new paths as most of the mutated test cases are (the blue area) overlapped by what the initial seed has mutated (the gray area). However, because seed B has a longer distance from the initial seed than seed A, the coverage area of B (the brown area) will have less overlap by that of initial seed file than A. So choosing seed B will trigger more new behaviors than selecting seed A.
 
