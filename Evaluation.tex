@@ -1,11 +1,18 @@
 The evaluation of our prototype consists of two parts: \textbf{\emph{path discovery}} and \textbf{\emph{bug finding}}. 
- Path discovery is devised to evaluate the distance based seed selection on several real-world binary programs, and \textit{SPF} component is disabled to illustrate more clearly. 
+ Path discovery is devised to evaluate coverage improvement on several real-world binary programs. 
  In bug finding, a demo program which contains several bugs, as well as another two benchmarks based on real-world programs, are leveraged to demonstrate the capability of the whole prototype system (i.e., both \textit{Searcher} and \textit{SPF} are enabled).
 
 %TODO: experimental setups, including the OS, RAM, and CPUs.
 
 \subsection{Path Discovery}
-To evaluate the path discovery ability of our prototype, we selected 8 programs which cover different input formats like executables, images, archives and network data. And the evaluation lasted for 24 hours.
+To evaluate the path discovery ability of our prototype, we selected 8 programs which cover different input formats like executables, images, archives and network data. 
+ The evaluation is designed as follows. 
+ Firstly, our distance based seed selection method is evaluated to select the most effective distance measurement. 
+ Then, we tested the capability of our whole prototype and compared the results with vanilla fuzz testing as well as symbolic execution assisted hybrid testing (\textit{SEHT}). 
+ All the evaluations lasted for 24 hours.
+
+
+
 The evaluation results were shown in Table~\ref{PD-8samples}. We have investigated the three distance measures mentioned before (i.e., EU, CS, and JI) as well as the original seed selection strategy (Order) from vanilla AFL which selects test case in the seed queue one by one.
 
 \begin{table}
@@ -34,11 +41,10 @@ An interesting point from Figure~\ref{path-detail}(a) is that, for \texttt{capst
 Figure~\ref{path-detail}(b) describes these four different selection strategies for four different samples according to the test time, where the x-axis indicates the test time in hours; while the y-axis shows the normalized path discovery of each strategy.
 As shown in Figure~\ref{path-detail}(b), both CS and EU performed consistently better than orderly during all the 24 hours. Particularly, EU performed better than CS in the first several hours, and then CS outperformed EU in the following testing. While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and \texttt{objdump}, but it failed to improve the performance in \texttt{tcpdump} after testing for 8 hours.
 
-Based on this result, we can see that cosine similarity based seed selection strategy can touch more paths than other strategies. So we selected CS as our selection strategy in the following bug finding evaluation.
+Based on this result, we can see that cosine similarity based seed selection strategy can touch more paths than other strategies. So we selected CS as our selection strategy in the following evaluation sections.
 \begin{figure}
-%  \centering
-  \subfigure[Normalized ressults for these four prioritization strategies.]{
-	\includegraphics[width=0.48\textwidth, trim={0.2cm 0.4cm 0cm 0cm}, clip]{figures/path-discovery.pdf} 
+  \subfigure[Normalized results for these four prioritization strategies.]{
+	\includegraphics[width=0.48\textwidth, trim={0.2cm 0.4cm 0cm 0cm}, clip]{figures/path-discovery.pdf}
   }
   \subfigure[Path discovery details along with 24 hours.]{
 	\includegraphics[width=0.48\textwidth, trim={0.5cm 0.1cm 1.5cm 0.8cm}, clip]{figures/path-time-detail.pdf} 
@@ -46,6 +52,25 @@ Based on this result, we can see that cosine similarity based seed selection str
   \caption{Path Discovery for different prioritization strategies.}
   \label{path-detail}
 \end{figure} 
+
+Figure~\ref{path-overall-rsults} shows the evaluation result of the whole prototype on path discovery. 
+ Compared with vanilla fuzz testing, symbolic execution assisted hybrid testing can increase the path coverage (11.88\% in average).
+  For example, the coverage increases 42.79\% for \texttt{readelf}. While, this performance gain is lower than 20\% for the other 7 programs. The coverage only increases 1.32\%  for \texttt{gif2png} is because that our symbolic execution cannot deal well with float number operation.
+ We can also see from this figure that the coverage of \textit{SEHT} can be improved by 7.22\% in average after handling symbolic pointers and loops (\textit{SEHT with SPF}). 
+ This improvement can be augmented by cooperating with CS searcher (\textit{SEHT with SPF and CS Searcher}). 
+  For example, the coverage of \textit{SEHT} is increased by 49.57\% for \texttt{objdump}. In average, the coverage is improved by 24.44\% for \textit{SEHT}. 
+ And the total improvement for the 8 programs of our prototype is 43.49\% when compared with vanilla fuzz testing.
+  This improvement is because that seed file with greatest distance has higher probability to trigger more fresh branches/paths, so solving such seed files earlier by symbolic execution can find more fresh seed files than other files. 
+  
+
+      
+\begin{figure}
+\begin{center}
+\includegraphics[width=0.8\textwidth]{figures/path-discovery-SPF-CS-all.pdf} 
+\caption{Normalized path discovery results.}\label{path-overall-rsults}
+\end{center}
+\end{figure}
+
 
 \subsection{Bug Finding}
 We evaluated the bug discovery ability of our method with two different benchmarks and some real world software. The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which is released in 2016 to test different vulnerability discovery tools \cite{dolan2016lava}. In the following sections, we are going to introduce the two benchmarks, and discuss the testing results of our prototype as well as other off-the-shelf vulnerability discovery tools (LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
@@ -94,26 +119,6 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
 	\end{tabular}
 \end{table}
 
-\begin{comment}
-% List this time information is useless, then comment it.
-\begin{table}
-\centering
-  \caption{\label{Prototype-result-CommonMB}Trigger time for each bug in \textit{CommonMB}  of our prototype (in \textit{second}).}
- 	\begin{tabular}{p{0.5cm}<{\centering} p{1cm}<{\centering} p{1cm}<{\centering} p{1cm}<{\centering}	p{1cm}<{\centering} p{1.5cm}<{\centering}  p{1cm}<{\centering} p{1cm}<{\centering}  p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
-		\toprule
-	    Core & cmp16 & cmp32 & add16 & add32 & complex & crc16 & crc32 & maze & sudoku \\
-		\midrule
-		1 	& 4.69 & 6.32 & 4.68 & 5.72 & $>1$ hour & 5.88 & 185.66 & $>1$ hour & $>1$ hour \\
-		2	& 0.02 & 2.44 & 4.31 & 0.74 & $>1$ hour & 5.14 & 2.51   & $>1$ hour & $>1$ hour \\
-		4	& 0.02 & 0.24 & 4.06 & 0.32 & $>1$ hour & 4.59 & 1.50   & $>1$ hour & $>1$ hour \\
-		6	& 0.02 & 0.21 & 4.16 & 0.14 & 0.48 	    & 4.67 & 2.80   & $>1$ hour & $>1$ hour \\
-		8	& 0.05 & 0.21 & 4.09 & 0.15 & 1.57      & 4.58 & 1.52   & $>1$ hour & $>1$ hour \\
-		10	& 0.02 & 0.20 & 4.08 & 0.30 & 1.54      & 4.57 & 1.53   & 10.86     & $>1$ hour \\
-	 \bottomrule
-	\end{tabular}
-\end{table}
-\end{comment}
-
 \subsubsection{LAVA Benchmark}
 \noindent In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automatically inject secure-related bugs into some Linux utilities for evaluating the bug-finding tools \cite{dolan2016lava}. These bugs are all hard-to-reach memory errors. In the paper of LAVA, the authors describe their results on the evaluation of coverage based fuzz testing, an SAT-based approach on the benchmark. The LAVA benchmark has two corpus sets, i.e., \textit{LAVA-1} and \textit{LAVA-M}.
 
@@ -131,15 +136,14 @@ Logic-style vulnerabilities are difficult for all tools to uncover because the n
 		SES	        & 1 (8\%)   & 0 (0\%)    & 1 (9\%)    & 3 (21\%)  & 0 (0\%)   & 1 (10\%) \\
 		AFL		    & 0 (0\%)   & 0 (0\%)    & 2 (18\%)   & 10 (71\%) & 9 (75\%)  & 1 (10\%) \\
 		S2E			& 3 (25\%)  & 2 (20\%)   & 3 (27\%)   & 4 (27\%)  & 3 (25\%)  & 2 (20\%) \\
-		Driller		& 1 (8\%)   & 2 (20\%)   & 2 (18\%)   & 12 (86\%) & 10 (73\%) & 1 (10\%) \\
 		Prototype	& 10 (83\%) & 10 (100\%) & 11 (100\%) & 13 (93\%) & 11 (92\%) & 7 (70\%) \\
 	 \bottomrule
 	\end{tabular}
 \end{table}
 
-Table~\ref{LAVA-1} summarized the results of bug finding evaluation on \textit{LAVA-1} from LAVA paper as well as some popular off-the-shelf tools (AFL/S2E/Driller). The maximum testing time for each bug was five hours. From this table, we can see that the \textbf{FUZZER} and \textbf{SES} mentioned in the paper only found 23 bugs and 6 bugs respectively in total. AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) but it outperformed S2E in larger ranges. Driller leverages the advantages of both fuzz testing and symbolic execution and the results show that it can find more paths than using them separately (28 bugs were discovered in total).
+Table~\ref{LAVA-1} summarized the results of bug finding evaluation on \textit{LAVA-1} from LAVA paper as well as some popular off-the-shelf tools (AFL and S2E). The maximum testing time for each bug was five hours. From this table, we can see that the \textbf{FUZZER} and \textbf{SES} mentioned in the paper only found 23 bugs and 6 bugs respectively in total. AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) but it outperformed S2E in larger ranges. 
 
-Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. Particularly, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. Meanwhile, because of the two improvements (i.e., \textit{SLB} and \textit{LSP}), our prototype can also trigger more bugs than Driller.
+Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. Particularly, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. 
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and SES which are mentioned in the LAVA paper. We also listed the results of VUzzer and our prototype in this table. 
 
@@ -171,7 +175,7 @@ This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain}
 It is interesting that AFL detected 15 more bugs in \texttt{elfparser} than VUzzer. This is because the fork server method leveraged in AFL enables the fuzzer can execute 51.6x more test cases than VUzzer in the same time, which can also increase the probability of finding bugs.
 
 \begin{table}
-  \caption{\label{zero-days}Performance of Our method VS. AFL \& VUzzer on unknown crashes.}
+  \caption{\label{zero-days}Performance of our method VS. AFL \& VUzzer on unknown crashes.}
   \centering
 	\begin{tabular}{l p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering} p{1.5cm}<{\centering}}
 		\toprule

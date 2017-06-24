@@ -6,7 +6,7 @@ Both of the two improvements will be discussed in the following sections in deta
 
 \begin{figure}
 \centering
-\includegraphics[width=0.7\textwidth]{figures/s2e-assist.pdf} 
+\includegraphics[width=0.8\textwidth]{figures/s2e-assist.pdf} 
 \caption{Symbolic execution assisted fuzz testing.}\label{s2e-assist}
 \end{figure}
 
@@ -22,13 +22,13 @@ The \textit{lazy forking} strategy in S2E \cite{chipounov2011s2e} is proposed to
 For example, for the instruction at Line 18 in Listing~\ref{RE-LCSP}, suppose the concrete value of \texttt{buf[i]} for $i\in[0,1,2,3]$ is \texttt{`A'}. 
 Then the lazy forking will try to fork the current state to two states, one with a \textit{hard constraint} expressed as $\texttt{buf[i]}=\texttt{`A'}$ and the other one with a \textit{soft constraint} expressed as $\texttt{buf[i]}\neq\texttt{`A'}$.
 By doing this, the ``path explosion'' problem is postponed to later moment.
-\lstinputlisting[label={RE-LCSP}, language=C,style=c,caption={A motivating code that contains symbolic pointer dereference.}]{codes/real-eaxmple-LSP.c} 
+
 
 However, the forking at Line 24\&25 will fail for the state with hard constraint. And the bug at Line 26 will be triggered only after enumerating all possible values for \texttt{buf[0]}, \texttt{buf[1]}, \texttt{buf[2]}, and \texttt{buf[3]}. So even though the lazy forking can ease the ``path explosion'' problem, it still needs to take longer time to trigger some interesting paths. This will bring performance loss as the objective of symbolic execution is to assist fuzz testing to uncover more paths as soon as possible in hybrid testing. 
 To mitigate this problem, we introduce a novel method \emph{lazy concretization of symbolic pointer} (LCSP) which is built on top of lazy forking. The detailed algorithm of LCSP is shown in Algorithm~\ref{LCSP}.
-
+\lstinputlisting[label={RE-LCSP}, language=C,style=c,caption={A motivating code that contains symbolic pointer dereference.}]{codes/real-eaxmple-LSP.c} 
 \begin{algorithm}
-  \caption{Lazy Concretizatin of Symbolic Pointer}
+  \caption{Lazy Concretization of Symbolic Pointer}
   \label{LCSP}
   \KwIn{Current State $S$, Pending States $S_P$ and Hard Constraint $C_H$}
   \KwOut{Testcase $t_{lsp}$ if success}

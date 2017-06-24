@@ -22,7 +22,7 @@
 \usepackage[lined, linesnumbered, boxed, ruled, commentsnumbered]{algorithm2e}
 
 \begin{document}
-\title{Making Fuzz Testing Smart Again}
+\title{Making Coverage based Fuzz Testing Great Again}
 \author{Bin Zhang}
 \maketitle
 
@@ -34,7 +34,7 @@ In this paper, we introduced two improvements to ease the path explosion problem
  These two improvements focus on symbolic pointers and loops and present a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization. 
  We also proposed a distance based seed selection method to rearrange the seed queue of coverage based fuzz testing to achieve higher coverage in the time budget. 
  We implemented a prototype and evaluated it from two viewpoints: path discovery and bug finding.
- The experimental results show that the seed selection method can improve path coverage by 34.3\%. And the evaluation results on three different benchmarks, a demo program, recently released LAVA benchmark, and some real-world programs on Unix, show that our prototype can trigger more crashes than some off-the-shelf vulnerability detection tools in all of these three benchmarks. 
+ The experimental results show that our method can improve path coverage by 43.49\% for our benchmark than vanilla fuzz testing. And the evaluation results on three different benchmarks, a demo program, recently released LAVA benchmark, and a set of real-world programs on UNIX, show that our prototype can trigger more crashes than some off-the-shelf vulnerability detection tools in all of these three benchmarks. 
 
 \end{abstract}
 \textbf{Keywords.} Fuzz Testing; Symbolic Execution; Software Vulnerability; Hybrid Testing
@@ -65,8 +65,6 @@ Our method is built on top of fuzz testing and symbolic execution, where we have
  As shown in Figure~\ref{path-detail}(a), all of these three distance based selection strategies failed to trigger more new behaviors for \texttt{capstone} which accepts the plain texture file as input. 
 
 \noindent\textit{\textbf{Float Point Operation:}} The symbolic execution engine we depend on will concretize symbolic write operations to \texttt{XMM} registers, which will lose some interesting paths when handling float point arithmetic operations. This problem happens for most of the MEPG process programs. So the symbolic execution engine should be upgraded to support float point arithmetic operations well in the future.
-
-%\noindent\textit{\textbf{Sanity Check of Symbolic Pointer:}} When given a symbolic pointer, our LCSP method will fork a pending state and then continue executing the program until a fork on a branch related to this pending state is failed. Then, we can improve the coverage by scheduling the pending state to generate a new test case. However, a symbolic pointer can point to multiple destinations, our LCSP method only focuses on improving the following execution coverage, and because we perform a scale controlled symbolic execution, we will kill this pending state after the execution is terminated and not generate all the possible test cases for this symbolic pointer. This will miss some interesting paths and even bug paths. So, it will be our future work to model the process memory map and then perform assertion checks when encountering with a pending state.
 
 \section{Related Work} \label{sec:related}
 \input{RelatedWork.tex}

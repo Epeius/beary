@@ -38,7 +38,6 @@ In hybrid testing, the performance gain from symbolic execution is still limited
  In this paper, we propose two advanced techniques to improve the efficiency of symbolic execution assisted hybrid testing.
 
  On one hand, symbolic pointers are lazily concretized to avoid generating too many states but cover more branches; and an optimization based on the loop bucket mechanism of AFL \cite{online:afl} is introduced to avoid getting stuck in symbolic loops.
- 
  On the other hand, to address the large size of seed queue, 
  we propose a distance based seed selection method for fuzz testing to improve the coverage when testing time is limited. 
  Each test case in the seed file queue is equipped with an weight value.
@@ -47,9 +46,6 @@ In hybrid testing, the performance gain from symbolic execution is still limited
  Our method prioritizes the seed queue according to this weight value and 
  then selects the seed file with the greatest weight value for next mutation cycle.
 
-
-
-Figure~\ref{Framework} shows the high-level overview of our prototype.
 
  Our main contributions consist of two main components, namely \emph{Symbolic Path Finder (SPF)} and \emph{Seacher}. 
  The \emph{SPF} component is leveraged to help the fuzzer to dive into deeper code areas 
@@ -62,15 +58,16 @@ Figure~\ref{Framework} shows the high-level overview of our prototype.
 
  Least but not last,  we have implemented the proposed techniques in a prototype tool,
  and performed a comprehensive experimental evaluations on three different benchmarks. The benchmarks consist of a demo program which contains 9 different difficult level bugs, recently released LAVA benchmark \cite{dolan2016lava}, and a set of real world UNIX programs. 
- The results show that our prototype can increase the coverage by 34.3\% and trigger more bugs than the state-of-the-art vulnerability discovery tools.
+ The results show that our prototype can increase the coverage by 43.49\% for some real world UNIX programs than vanilla fuzz testing and trigger more bugs than the state-of-the-art vulnerability discovery tools.
 
-
+\begin{comment}
 \begin{figure}
 \begin{center}
 \includegraphics[width=0.7\textwidth]{figures/framework.pdf} 
 \caption{High Level Framework.}\label{Framework}
 \end{center}
 \end{figure}
+\end{comment}
 
 
 In summary, this paper makes the following contributions.
