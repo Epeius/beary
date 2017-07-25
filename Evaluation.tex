@@ -218,7 +218,7 @@ An interesting point from Figure~\ref{path-detail}(a) is that, for \texttt{capst
  This is because, in our experiment, the input of \texttt{captone} was only plain texture file with some assembly code in it. Such kind of input is not as well formatted as other inputs like ELF, JPEG, CAP and so on. 
  So modifying any parts of the input may have same probability to trigger new behaviors which means each seed file in the queue will have nearly the same power to cover new code areas. This also demonstrates that our seed prioritization method will gain more performance for well-formatted inputs.
 
-To demonstrate the path discovery speed along with test time, we randomly selected four programs (i.e., \texttt{readelf}, \texttt{ffmpeg}, \texttt{objdump}) in our benchmark and collected the number of unique paths every two hours (the number for each program is normalized to the maximum to make this figure more clear).
+To demonstrate the path discovery speed along with test time, we selected four representative programs, i.e., \texttt{readelf}, \texttt{ffmpeg}, \texttt{objdump}, and \texttt{tcpdump}, in our benchmark and collected the number of unique paths every two hours (the number for each program is normalized to the maximum to make this figure more clear).
  The results are shown in Figure~\ref{path-detail}(b), where the x-axis indicates the test time in hours; while the y-axis shows the normalized unique number of paths triggered by each strategy.
 As shown in Figure~\ref{path-detail}(b), both CS and EU performed consistently better than orderly during all the 24 hours.
  More specifically, EU performed better than CS in the first several hours, and then CS outperformed EU in the following test time.
