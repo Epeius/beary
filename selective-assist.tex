@@ -1,8 +1,8 @@
-Hybrid testing method can help to reduce the \textit{memory overhead} by limiting the number of states to an acceptable level. However, as mentioned in Section~\ref{sec:introduction}, symbolic pointers and loops will quickly generate lots of useless states that may not cover new code areas but bring serious performance overhead.
+Hybrid testing can help to reduce \textit{memory overhead} by limiting the number of states to an acceptable level. However, as mentioned in Section~\ref{sec:introduction}, symbolic pointers and loops will quickly generate lots of useless states that may not cover new code areas but bring serious performance overhead.
 
-To address the large number of states forked from symbolic pointers, we propose a novel \textit{lazily concretization} of symbolic pointers which can not only reduce the number of states but also improve the coverage. 
-For symbolic loops, we introduce an optimization (i.e., \textit{symbolic loop bucket}) based on the loop bucket in AFL to control the forking in symbolic loops. By doing this, the execution can penetrate into deeper code areas without generating lots of states.
-Both improvements will be discussed in the following sections in detail.
+To address the large number of states forked from symbolic pointers, we propose a novel \textit{lazily concretization} of symbolic pointers which can not only reduce the number of states but also improve coverage. 
+For symbolic loops, we introduce an optimization based on AFL's \textit{loop bucket} to control forking in symbolic loops. By doing this, execution can reach deeper code areas without generating lots of states.
+Both improvements will be discussed in the following sections.
 
 \begin{figure}
 \centering
@@ -12,26 +12,35 @@ Both improvements will be discussed in the following sections in detail.
 
 \subsection{Lazy Concretization of Symbolic Pointer}
 The code snippet in Listing~\ref{RE-LCSP} shows the basic symbolic pointer problem in dynamic symbolic execution. 
-The first parameter (i.e., \texttt{buf}) of function \texttt{looks\_ascii} points to the memory that contains symbolic input data. The \texttt{nbytes} parameter is a concrete value that denotes the size of memory buffer pointed by \texttt{buf}. \texttt{ubuf} is the shadow buffer which is used for further process. 
-Function \texttt{looks\_ascii} tries to determine whether each character of the symbolic input data appears in plain ASCII text at Line 18, and returns immediately once a non-plain ASCII text character appears. 
-Since \texttt{buf[i]} has 256 possible values (\textit{unsigned char}) initially, so if the symbolic engine forks state for each possible value (i.e., full symbolic memory model), the total number of states forked from at Line 18 will quickly reach to $256^{nbytes}$ which raises ``state explosion'' problem. And the bug nested at Line 26 will be triggered only when the states that satisfy the path condition is scheduled. For example, suppose \texttt{nbytes} is 4, then worst case is that the bug can only be triggered after all of $256^4=4294967296$ states are scheduled.
+The first parameter (i.e., \texttt{buf}) of function \texttt{looks\_ascii} points to memory that contains symbolic input data. The \texttt{nbytes} parameter is a concrete value that denotes the size of the memory buffer pointed by \texttt{buf}. \texttt{ubuf} is a shadow buffer which is used for further processing. 
+Function \texttt{looks\_ascii} tries to determine whether each character of the symbolic input data appears in plain ASCII text, and returns immediately once a non-plain ASCII text character appears. 
+Since \texttt{buf[i]} has 256 possible values (\textit{unsigned char}), then the symbolic engine will fork state for each possible value (i.e., full symbolic memory model).
+This will cause the code at Line 18 to fork $256^{nbytes}$ states, causing state explosion.
+The bug nested at line 26 will only be triggered when the states that satisfy the path condition are scheduled for execution, which may never practically occur in the face of state explosion. For example, suppose \texttt{nbytes} is 4, then the worst case is that the bug can only be triggered after all $256^4=4294967296$ states are scheduled.
 
-When given a symbolic pointer, based on different memory models, different handle processes can be taken. For example, in \textbf{full symbolic memory model}, each possible value of symbolic pointer will fork a corresponding state \cite{song2008bitblaze, thakur2010directed, brumley2011bap, trtik2014symbolic}. There also exists a strategy namely \textit{address concretization} which will concretize the pointer to a single specific address \cite{godefroid2005dart, burnim2008heuristics}. Obviously, the full symbolic memory model will raise the serious state explosion (as mentioned before) and the address concretization may lose some interesting paths. To mitigate the scalability problems of full symbolic memory model and the loss of interesting paths of address concretization, a \textbf{partial symbolic memory model} has been proposed to make a trade-off \cite{cha2012unleashing, avgerinos2014exploiting, Shoshitaishvili_firmalice-automatic}. The partial symbolic memory model tries to concretize all symbolic pointer write operation and treats all symbolic pointer read operation as full symbolic memory model. However, because the instruction at Line 18 is the read operation, so partial symbolic memory model will still fork $256^{nbytes}$ states.
+There are different approaches for handling state explosion caused by symbolic pointers. For example, in the \textbf{full symbolic memory model}, each possible value of symbolic pointer will fork a corresponding state \cite{song2008bitblaze, thakur2010directed, brumley2011bap, trtik2014symbolic}.
+ In contrast, the \textit{address concretization} strategy will concretize the pointer to a specific address \cite{godefroid2005dart, burnim2008heuristics}.
+ Obviously, the full symbolic memory model may cause state explosion (as mentioned before) and the address concretization may lose some interesting paths.
+  To mitigate the scalability problems of full symbolic memory model and the loss of interesting paths of address concretization, a \textbf{partial symbolic memory model} has been proposed \cite{cha2012unleashing, avgerinos2014exploiting, Shoshitaishvili_firmalice-automatic}.
+  The partial symbolic memory model tries to concretize all symbolic pointer write operation and treats all symbolic pointer read operation using a full symbolic memory model. 
+  However, because the instruction at line 18 is a read operation, the partial symbolic memory model will still fork $256^{nbytes}$ states.
 
-The \textit{lazy forking} strategy in S2E is proposed to avoid maintaining expensive symbolic pointers and ease the large number of states by forking \textit{pending states} in concolic execution \cite{chipounov2011s2e}. 
+The \textit{lazy forking} strategy in S2E was proposed to avoid maintaining expensive symbolic pointers and ease the large number of states by forking \textit{pending states} in concolic execution \cite{chipounov2011s2e}. 
 
-Consider an memory dereference instruction $I\in Inst$ in program $P$, suppose $I$ tries to access memory indexed by a symbolic expression $e_{addr}$. And the concrete value of $e_{addr}$ is $M(e_{addr})$.
+Consider a memory dereference instruction $I\in Inst$ in program $P$, suppose $I$ tries to access memory indexed by a symbolic expression $e_{addr}$. And the concrete value of $e_{addr}$ is $M(e_{addr})$.
 
-Lazy forking treats such instruction $I$ as a conditional instruction and forks new states for $I$. It firstly evaluates the concrete value from concrete memory as $M(e_{addr})$, then it constructs an expression $condition:= EQ(e_{addr}, M(e_{addr}))$. Then it forks a new state $s_p=fork(s, ^\neg condition)$ which is named as pending state. After that, each possible value of $e_{addr}$ will be exercised by systematically repeating this process. Even though lazy forking still needs to enumerate all possible values, it can avoid overhead by significantly reducing the total number of states that simultaneously exist in system. Here, the $condition$ is called \textit{hard constraint} and $^\neg condition$ is called \textit{soft constraint}.
+Lazy forking treats such instruction $I$ as a conditional instruction and forks new states for $I$. It first evaluates the concrete value from concrete memory as $M(e_{addr})$, then it constructs an expression $condition:= EQ(e_{addr}, M(e_{addr}))$. Then it forks a new state $s_p=fork(s, ^\neg condition)$ which is labeled as a ``pending state''. After that, each possible value of $e_{addr}$ will be exercised by systematically repeating this process. Even though lazy forking still needs to enumerate all possible values, it can avoid overhead by significantly reducing the total number of states that simultaneously exist in system. Here, the $condition$ is called a \textit{hard constraint} and $^\neg condition$ is called a \textit{soft constraint}.
 
-For example, for the memory dereference instruction at Line 18 in Listing~\ref{RE-LCSP}, suppose the concrete value of \texttt{buf[i]} for $i\in[0,1,2,3]$ is `\texttt{A}'. 
-Then the lazy forking will fork a new pending state and add the soft constraint $\texttt{buf[i]}\neq\texttt{`A'}$ to it. Meanwhile, the path constraint of original state will be appended with the hard constraint $\texttt{buf[i]}=\texttt{`A'}$.
-By doing this, the ``state explosion'' problem is postponed to later moment.
+For example, for the memory dereference instruction at line 18 in Listing~\ref{RE-LCSP}, suppose the concrete value of \texttt{buf[i]} for $i\in[0,1,2,3]$ is `\texttt{A}'. 
+In this case lazy forking will fork a new pending state and add the soft constraint $\texttt{buf[i]}\neq\texttt{`A'}$ to it. Meanwhile, the path constraint of the original state will be appended with the hard constraint $\texttt{buf[i]}=\texttt{`A'}$.
+By doing this, the ``state explosion'' problem is postponed to a later moment.
 
-However, the hard constraint may reduce the suffix feasible paths to a very small group. For example, suppose the address of symbolic pointer can be expressed as $e_{addr}=f(v_1, v_2,\cdots, v_n)$, where $v_1, v_2,\cdots, v_n\in Var$ are variables of program $P$, then expression $condition:= EQ(e_{addr}, M(e_{addr}))$ will limit current execution path only feasible when ($v_1, v_2,\cdots, v_n$) equals to ($M(v_1), M(v_2),\cdots, M(v_n)>$). 
+%TODO: need to be rewritten
+However, the hard constraint may reduce the suffix feasible paths to a very small group. For example, suppose the address of a symbolic pointer can be expressed as $e_{addr}=f(v_1, v_2,\cdots, v_n)$, where $v_1, v_2,\cdots, v_n\in Var$ are variables of program $P$.
+ Then expression $condition:= EQ(e_{addr}, M(e_{addr}))$ will limit the current execution path only feasible when ($v_1, v_2,\cdots, v_n$) equals to ($M(v_1), M(v_2),\cdots, M(v_n)>$). 
 
-Take the sample code in Listing~\ref{RE-LCSP} as a more clear example, execution path to line 26 will be infeasible because the hard constraint limits the value of \texttt{buf[i]} ($i\in[0,1,2,3]$) to `\texttt{A}'. And the crash can only be triggered after enumerating all possible values for \texttt{buf[i]} ($i\in[0,1,2,3]$) in worst case.
-So even though the lazy forking can ease the ``state explosion'' problem, it still needs to take longer time to trigger interesting paths. This will bring performance loss as the objective of dynamic symbolic execution is to assist fuzz testing to uncover more paths as soon as possible in hybrid testing. 
+Take the sample code in Listing~\ref{RE-LCSP}. The execution path to line 26 will be infeasible because the hard constraint limits the value of \texttt{buf[i]} ($i\in[0,1,2,3]$) to `\texttt{A}'. And the crash can only be triggered after enumerating all possible values for \texttt{buf[i]} ($i\in[0,1,2,3]$) in the worst case.
+So even though lazy forking can ease the state explosion problem, it may still need to take longer time to trigger interesting paths. This will result in performance loss, because the symbolic execution engine will hold up the fuzzer. 
 To mitigate this problem, we introduce a novel method \emph{lazy concretization of symbolic pointer} (LCSP) which is built on top of lazy forking. The detailed algorithm of LCSP is shown in Algorithm~\ref{LCSP}.
 
 
@@ -66,14 +75,14 @@ To mitigate this problem, we introduce a novel method \emph{lazy concretization 
   return $null$\;
 \end{algorithm}
 
-When performing lazy forking, all the states whose path constraints contain the soft constraints will be collected into \emph{Pending States}. And the pending states are grouped by the program variables (e.g., each byte in an input file) that affect the corresponding soft constraint. 
-Then when the dynamic symbolic execution engine detects infeasible branch that because of hard constraint, the branch condition $C_F$ will be investigated to extract the program variables $offs$ (line 1\&2). 
- LCSP ignores the cases that there are no corresponding pending states for $offs$ (line 3$\sim$5). 
+When performing lazy forking, all the states whose path constraints contain the soft constraints will be collected into \emph{Pending States}. These pending states are grouped by the program variables (e.g., each byte in an input file) that affect the corresponding soft constraint. 
+Then when the dynamic symbolic execution engine detects an infeasible branch due to hard constraints, the branch condition $C_F$ will be investigated to extract the program variables $offs$ (line 1\&2). 
+ LCSP ignores the cases when there are no corresponding pending states for $offs$ (line 3$\sim$5). 
  If state $S$ has pending states, all the related conditions in path constraint of $S$ except for the hard constraint will be added to the related pending states (line 9).
  After that, in order to generate the test case that satisfies the failed condition, the branch condition $C_F$ of infeasible branch will be also added to the pending states (line 10).
  After appending all related conditions, the dynamic symbolic execution engine will try to generate a new test case (line 11), and once the generation successes, the test case $t_{lsp}$ will be sent to the fuzzer to find more paths.
 
-For the motivating code in Listing~\ref{RE-LCSP}, suppose \texttt{nbytes} is 5. Then when dynamic symbolic execution reaches line 24, there will be six states in the system, including one execution state $S_0$ and five pending states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when dereferencing \texttt{buf[$i$]} at line 18.
+For the code in Listing~\ref{RE-LCSP}, suppose \texttt{nbytes} is 5. Then when dynamic symbolic execution reaches line 24, there will be six states in the system: one execution state $S_0$ and five pending states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when dereferencing \texttt{buf[$i$]} at line 18.
 Then path constraint for each states is shown in Table~\ref{table:path-conditions}.
 
 \begin{table}[!b]
@@ -110,11 +119,12 @@ State  & buf[0] & buf[1] & buf[2] & buf[3] & buf[4]\\
 
 The hard constraint for $S_0$ is $C_{H}\leftarrow$ \{\texttt{buf[0]$=$`A'\& buf[1]$=$`A'\&buf[2]$=$`A'\&buf[3]$=$`A'\&buf[4]$=$`A'}\}. 
  Because of $C_{H}$, the branch condition at line 24\&25 ($C_{F}\leftarrow$ \{\texttt{buf[0]$=$`D'\&buf[1]$=$`E'\&buf[2]$=$`A'\&buf[3]$=$`D'}\}) will be infeasible.
-Based on \textit{LCSP}, the path conditions of $S_0$ except for the related hard conditions will be tried to append to each pending state to generate new test case. 
+Based on \textit{LCSP}, the path conditions of $S_0$ (except for the related hard conditions) will be append to each pending state to generate new test case. 
 After stripping the related hard conditions, the \textit{Conditions} at line 6 in Listing~\ref{LCSP} will be $\texttt{buf[4]}=\texttt{`A'}$. 
-Then this \textit{Conditions} will be added to each pending state. For example, the path constraint of $P_0$ after adding such conditions will be \{\texttt{buf[0]$\neq$`A' \& buf[4]$=$`A' \& buf[0]$=$`D' \& buf[1]$=$`E' \& buf[2]$=$`A' \& buf[3]$=$`D'}\}. After solving this path constraint, we can successfully generate a test case that satisfies the condition at line 24\&25 and triggers the bug at line 26. 
+Then \textit{Conditions} will be added to each pending state. For example, the path constraint of $P_0$ after adding such conditions will be \{\texttt{buf[0]$\neq$`A' \& buf[4]$=$`A' \& buf[0]$=$`D' \& buf[1]$=$`E' \& buf[2]$=$`A' \& buf[3]$=$`D'}\}. After solving this path constraint, we can successfully generate a test case that satisfies the condition at line 24\&25 and triggers the bug at line 26. 
 
-An interesting point in our example is that $P_1$, $P_2$, $P_3$, and $P_4$ cannot successfully trigger this bug. This does not mean that these states are useless, for example, if the condition at Line 24\&25 is \{\texttt{buf[0]$=$`A' \& buf[1]$=$`B' \& buf[2]$=$`C' \& buf[3]$=$`D'}\}, then $P_1$ can successfully generate a corresponding test case that triggers the bug.
+An interesting point in our example is that $P_1$, $P_2$, $P_3$, and $P_4$ cannot successfully trigger this bug. This does not mean that these states are useless. 
+ For example, if the condition at line 24\&25 is \{\texttt{buf[0]$=$`A' \& buf[1]$=$`B' \& buf[2]$=$`C' \& buf[3]$=$`D'}\}, then $P_1$ can successfully generate a corresponding test case that triggers the bug.
 
 Based on this algorithm, we can generate at least one fresh test case that satisfies the branch condition whenever a branch is infeasible because of lazy forking. But we still need to prove this test case will steer the program to execute the same path with the original state and then covers the branch that fails in the original state. A quick execution consistency proof is explained as follows:
 
@@ -130,7 +140,8 @@ $PC_A\leftarrow \displaystyle \bigcap\limits_{i=0}^{6} CB_i \cap CB_u$
 \end{center}
 , where the $CB_i$ denotes the path condition at branch $B_i$.
 
- Assume that hard constraint is $var=0xAB$ which is originated from the lazy forking from $B_1$. And we also assume that the branch conditions at $B_3$ and $B_5$ are also affected by $var$; state $B$ is the corresponding pending state forked from $B_1$, and its path constraint is:
+ Assume that the hard constraint is $var=0xAB$ which is originated from lazy forking from $B_1$. 
+  We also assume that the branch conditions at $B_3$ and $B_5$ are also affected by $var$; state $B$ is the corresponding pending state forked from $B_1$, and its path constraint is:
 \begin{center}
 $PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1$
 \end{center}
@@ -141,15 +152,15 @@ Then, according to the \textit{LCSP} algorithm in Listing~\ref{LCSP}, when state
 \begin{center}
 $PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1 \cap (\bigcap\limits_{i=0,i \neq 1}^{6} CB_i) \cap ^\neg CB_u$
 \end{center}
-where $^\neg CB_u $ stands for the branch condition we want to cover;  $\bigcap_{i=0,i \neq 1}^{6} CB_i$ is the conditions from state $A$ after stripping the hard constraint.
+where $^\neg CB_u $ is the branch condition we want to cover and $\bigcap_{i=0,i \neq 1}^{6} CB_i$ is the conditions from state $A$ after stripping the hard constraint.
 
-We need to prove the following formula.
+We need to prove the following formula:
 
 \begin{center}
 $\mathbb{Z}=\{var\arrowvert PC_B(var) = True\} \neq \emptyset$
 \end{center}
 
-As there are only two branches before $B_u$ that depend on $var$, so the expression $PC_B$ can be simplified to:
+As there are only two branches before $B_u$ that depend on $var$, the expression $PC_B$ can be simplified to:
 \begin{center}
 $PC_B\leftarrow^\neg CB_u \cap ^\neg CB_1 \cap CB_3 \cap CB_5$
 \end{center}
@@ -161,7 +172,7 @@ case1: $CB_3 \cap CB_5 = (var = 0xAB)$
 case2: $CB_3 \cap CB_5 \neq (var = 0xAB)$
 \end{center}
 
-Under the first case, the path to $B_u$ is only feasible when $var$ equals to $0xAB$. So the edge $^\neg B_u$ can never be satisfied (i.e., \emph{dead code}) because $(var = 0xAB) \subseteq CB_u$. For the second case, there must be at least one feasible solution for $var$ that satisfies with the soft constraint $^\neg CB_1$, so $^\neg CB_1 \cap \bigcap_{i=0,i \neq 1}^{6} CB_i$ can be evaluated to $True$ for some specified values of $var$. This has proved that there must be at least one test case under $PC_B$ that can steer the program to the infeasible branch $B_u$.
+Under the first case, the path to $B_u$ is only feasible when $var$ equals to $0xAB$. So the edge $^\neg B_u$ can never be satisfied (i.e., \emph{dead code}) because $(var = 0xAB) \subseteq CB_u$. For the second case, there must be at least one feasible solution for $var$ that satisfies the soft constraint $^\neg CB_1$, so $^\neg CB_1 \cap \bigcap_{i=0,i \neq 1}^{6} CB_i$ can be evaluated to $True$ for some specified values of $var$. This has proved that there must be at least one test case under $PC_B$ that can steer the program to the infeasible branch $B_u$.
 
 Similarly, for branch condition $B_u$, there are also two possible cases:
 \begin{center}
@@ -180,32 +191,32 @@ $\displaystyle ^\neg CB_u \cap ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB
 So above all, we can draw a conclusion that our \emph{LCSP} algorithm can keep the execution consistency when $^\neg B_u$ is not dead code.
 
 \subsection{Optimization for Symbolic Loop}
-Symbolic loop, whose loop control variable depends on symbolic data, will cause serious ``state explosion'' problem as its loop times will range from 0 to infinite theoretically. 
-Even though the hybrid testing method can ease the ``state explosion'' problem, but the states forked from the symbolic loop will quickly force the number of states to increase to the upper bound of budget. 
+Symbolic loop, whose loop control variable depends on symbolic data, is another common cause of state explosion since its loop times may range from 0 to infinite theoretically. 
+Even though the hybrid testing method can ease state explosion, the states forked from a symbolic loop will quickly force the number of states to increase to the budget's upper bound. 
 
 \lstinputlisting[label={RE-SLB}, language=C,style=c,caption={A motivating example to demonstrate state explosion raised by symbolic loops.}]{codes/example-SLB.c} 
 
 The code snippet in Listing~\ref{RE-SLB} demonstrates this problem. Function \texttt{verify\_packet} reads the \texttt{length} of the raw data from the \texttt{packet} at line 4.
  Then from Line 6 to 10, it investigates each bytes in the raw data to determine whether there exists the ending descriptor (i.e., \texttt{0xFF}) through a loop structure. 
  Suppose we have a concrete test case from the seed queue of the fuzzer and the \texttt{length} after line 4 is \texttt{0xAA}. 
- Since all the data of \texttt{packet} are marked as symbolic, so the loop from line 6 to 10 whose loop variable \texttt{length} is symbolic will then raise the ``state explosion'' problem.
- Because the possible value of \texttt{length} will be in the range of [0, $2^{32}-1$], so there will be $2^{32}$ states forked from line 6 in the worst case. 
+ Since the data of \texttt{packet} is marked as symbolic, the loop from line 6 to 10 (whose loop variable \texttt{length} is symbolic) will result in state explosion.
+ Because the possible value of \texttt{length} will be in the range of [0, $2^{32}-1$], $2^{32}$ states will be forked from line 6 in the worst case. 
  
-Most of the forked states from line 5 will not contribute to any new code coverage in this example but only bring performance overhead, So the symbolic loops have to be carefully handled to avoid getting stuck at the loop spot. 
+Most of the forked states from line 5 will not contribute to any new code coverage but only bring performance overhead.
+ It is therefore important to also handle symbolic loops. 
 
-%TODO: 讲一下cab-fuzz
-A \textit{boundary state prioritization} method is proposed recently to ease the state explosion problem due to symbolic loops.
- The key idea of this prioritization is to defer the analysis of uninteresting states based on the likelihood of security vulnerability \cite{cab-fuzz}. 
+A \textit{boundary state prioritization} method has been proposed to ease the state explosion problem due to symbolic loops.
+ The key idea of this prioritization is to defer the analysis of uninteresting states based on the likelihood of a security vulnerability \cite{cab-fuzz}. 
  Specifically, it focuses only on three types of states for a symbolic loop: \textit{no loop execution}, \textit{single loop execution}, and \textit{the largest number of loop executions}.
- The author implemented such strategy within S2E \cite{chipounov2011s2e} and produced a vulnerability detection tool \textit{CAB-Fuzz}.
- And it successfully found 21 undisclosed unique crashes in Windows 7 and Windows Server 2008 \cite{cab-fuzz}.
+ The author implemented such a strategy within S2E \cite{chipounov2011s2e} and produced a vulnerability detection tool \textit{CAB-Fuzz}.
+ It successfully found 21 undisclosed unique crashes in Windows 7 and Windows Server 2008 \cite{cab-fuzz}.
  
 We extend this boundary state prioritization method by integrating it with the \emph{Loop Bucket} mechanism employed in AFL \cite{online:afl} to achieve better performance on finding vulnerabilities.
  
-AFL utilizes \emph{Loop Bucket} to avoid collecting too many test cases which only affect the loop times into the seed queue \cite{online:afl}. It groups the loop times into 8 different buckets, i.e., [1, 2, 3, 4-7, 8-15, 16-31, 32-127, 128+]. Only changes happened between different buckets will be regarded as new behaviors. Based on this idea, we proposed a \textit{Symbolic Loop Bucket} (SLB) to handle the symbolic loop when performing hybrid testing. The algorithm of SLB is described in Algorithm~\ref{SLB}.
+AFL utilizes \emph{Loop Bucket} to avoid collecting too many test cases which only affect the loop times into the seed queue \cite{online:afl}. It groups the loop times into 8 different buckets, i.e., [1, 2, 3, 4-7, 8-15, 16-31, 32-127, 128+]. Only changes that occur between different buckets will be regarded as new behaviors. Based on this idea, we proposed a \textit{Symbolic Loop Bucket} (SLB) to handle the symbolic loop when performing hybrid testing. The algorithm of SLB is described in Algorithm~\ref{SLB}.
 
-Loops are extracted from the target program by static analysis. These loops will be configured to dynamic symbolic execution engine to help it recognize loops in runtime. All the symbolic loops can be distinguished from the others by checking whether the loop exit condition is affected by symbolic data or not (line 1$\sim$3). For the edge belong to symbolic loop, the uncovered loop buckets for this loop will be obtained by analyzing the \textit{Bitmap} mentioned before (line 5). 
-In already covered loop buckets, the program will loop for one more time without forking new state (line 16\&17). Once an uncovered bucket is reached, the corresponding test case will be generated and then this uncovered bucket will be removed from the uncovered loop buckets to avoid generating multiple test cases (line 7$\sim$12). After generating test cases for all the uncovered buckets, the loop will be prohibited from being executed for more times. This can make sure that all the loop buckets will be covered without coming across with the ``state explosion'' problem.
+Loops are extracted from the target program by static analysis. These loops will be configured in the dynamic symbolic execution engine to help it recognize loops in runtime. All the symbolic loops can be distinguished from the others by checking whether the loop exit condition is affected by symbolic data or not (line 1$\sim$3). For the edge belongs to symbolic loop, the uncovered loop buckets for this loop will be obtained by analyzing the \textit{Bitmap} mentioned before (line 5). 
+In already covered loop buckets, the program will loop for one more time without forking new state (line 16\&17). Once an uncovered bucket is reached, the corresponding test case will be generated and then this uncovered bucket will be removed from the uncovered loop buckets to avoid generating multiple test cases (line 7$\sim$12). After generating test cases for all the uncovered buckets, the loop will be prohibited from being executed for more times. This can make sure that all the loop buckets will be covered without causing state explosion.
 
 \begin{algorithm}
   \LinesNumbered
