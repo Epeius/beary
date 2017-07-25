@@ -59,17 +59,7 @@ a demo program, the LAVA benchmark, and a set of real-world programs) show that 
 \input{Evaluation.tex}
 
 \section{Discussion and Limitations} \label{sec:discussion}
-Our method is built on top of coverage based fuzz testing and dynamic symbolic execution, where we have introduced distance based seed search strategy, symbolic loop bucket, and lazy symbolic pointer.
- While an improvement, there are still some drawbacks to our method. This section discusses these limitations and take a future look at the vulnerability discovery.
-
-\noindent\textit{\textbf{Distance Measure:}} Our seed selection strategy leverages three well-known distance measures, i.e., Euclidean Distance, Cosine Similarity and Jaccard Index. Also, we have evaluated these three measures and compared the results with no search strategy. In the future, we hope to investigate other distance metrics (e.g.\ hamming distance, N-gram distance, etc.) to find a better measurement for different execution paths (or different seed inputs). 
-
-\noindent\textit{\textbf{Plain Input Format:}} Programs that accept input with no specific format cannot gain performance improvement from our distance based seed selection method.
- As shown in Figure~\ref{path-detail}(a), all of these three distance based selection strategies failed to trigger more new behaviors for \texttt{capstone} which accepts the plain texture file as input. 
-
-\noindent\textit{\textbf{Float Point Operation:}} The dynamic symbolic execution engine we depend on will concretize symbolic write operations to \texttt{XMM} registers, which will lose some interesting paths when handling float point arithmetic operations. This problem happens for most of the MEPG processing programs. So the dynamic symbolic execution engine should be upgraded to support float point arithmetic operations to handle these types of programs.
-
-%TODO: list future work here
+\input{Discussion.tex}
 
 \section{Related Work} \label{sec:related}
 \input{RelatedWork.tex}
