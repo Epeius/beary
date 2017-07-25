@@ -12,7 +12,7 @@
 
 %\supertitle{Submission Template for IET Research Journal Papers}
 
-\title{Discover Deeper Bugs with Dynamic Symbolic Execution and Coverage based Fuzz Testing}
+\title{Discover Deeper Bugs with Dynamic Symbolic Execution and Coverage-based Fuzz Testing}
 
 \author{\au{Bin Zhang$^{1,2\corr}$}, \au{Chao Feng$^{1}$}, \au{Adrian Herrera$^2$}, \au{Vitaly Chipounov$^3$}, \au{George Candea$^2$},  \au{Chaojing Tang$^{1}$}}
 %
@@ -30,12 +30,12 @@
 % We also proposed a distance based seed selection method to rearrange the seed queue of coverage based fuzzer to achieve higher coverage in the time budget. 
 % We implemented a prototype and evaluated it from two viewpoints: path and vulnerability discovery.
 % The experimental results on three different benchmarks, a demo program, recently released LAVA benchmark, and a set of real-world programs on UNIX, show that our prototype can trigger more crashes than some off-the-shelf vulnerability detection tools in all of these benchmarks. Additionally, the evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing for our benchmark. 
-Coverage based fuzz testing and dynamic symbolic execution are both popular program testing techniques. However, both of them suffer from scalability problems when considering the complexity of modern software. Hybrid testing methods mitigate this problem by leveraging dynamic symbolic execution to assit fuzz testing. However, the efficiency of such method is still limit by some specific program structures and the schedule of seed files.
+Coverage-based fuzz testing and dynamic symbolic execution are both popular program testing techniques. However, on their own, both techniques suffer from scalability problems when considering the complexity of modern software. Hybrid testing methods attempt to mitigate these problems by leveraging dynamic symbolic execution to assist fuzz testing. Unfortunately, the efficiency of such methods are still limit by some specific program structures and the schedule of seed files.
 
 In this paper, we introduced a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization to ease the state explosion raised by dynamic symbolic execution in hybrid testing.
-We also proposed a distance based seed selection method to rearrange the seed queue of the fuzzer to achieve higher coverage in the time budget. We implemented a prototype and evaluated it from two viewpoints: vulnerability and path discovery. 
-The vulnerability discovery results on three different benchmarks,
-a demo program, recently released LAVA benchmark, and a set of real-world programs, show that our prototype can trigger more crashes than other off-the-shelf vulnerability detection tools in all of these benchmarks. And the path discovery evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing.
+We also proposed a distance based seed selection method to rearrange the seed queue of the fuzzer to achieve higher coverage in a given time budget. We implemented a prototype and evaluated it from two viewpoints: vulnerability and path discovery. 
+The vulnerability discovery results on three different benchmarks (
+a demo program, the LAVA benchmark, and a set of real-world programs) show that our prototype can trigger more crashes than other off-the-shelf vulnerability detection tools in all of these benchmarks. Additionally, the path discovery evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing.
 \end{abstract}
 
 \maketitle
@@ -59,20 +59,23 @@ a demo program, recently released LAVA benchmark, and a set of real-world progra
 \input{Evaluation.tex}
 
 \section{Discussion and Limitations} \label{sec:discussion}
-Our method is built on top of coverage based fuzz testing and dynamic symbolic execution, where we have introduced distance based seed search strategy, symbolic loop bucket, and lazy symbolic pointer. But there are still some drawbacks in our method, so in this section, we will discuss the limitations of our method and take a future look at the vulnerability discovery.
+Our method is built on top of coverage based fuzz testing and dynamic symbolic execution, where we have introduced distance based seed search strategy, symbolic loop bucket, and lazy symbolic pointer.
+ While an improvement, there are still some drawbacks to our method. This section discusses these limitations and take a future look at the vulnerability discovery.
 
-\noindent\textit{\textbf{Distance Measure:}} Our seed selection strategy leverages three well-known distance measures, i.e., Euclidean Distance, Cosine Similarity and Jaccard Index. Also, we have evaluated these three measures and compared the results with no search strategy. In the future, we still need to check more definitions of distance, like hamming distance, N-gram distance and so on, to find a better measurement for different execution paths (or different seed inputs). 
+\noindent\textit{\textbf{Distance Measure:}} Our seed selection strategy leverages three well-known distance measures, i.e., Euclidean Distance, Cosine Similarity and Jaccard Index. Also, we have evaluated these three measures and compared the results with no search strategy. In the future, we hope to investigate other distance metrics (e.g.\ hamming distance, N-gram distance, etc.) to find a better measurement for different execution paths (or different seed inputs). 
 
 \noindent\textit{\textbf{Plain Input Format:}} Programs that accept input with no specific format cannot gain performance improvement from our distance based seed selection method.
  As shown in Figure~\ref{path-detail}(a), all of these three distance based selection strategies failed to trigger more new behaviors for \texttt{capstone} which accepts the plain texture file as input. 
 
-\noindent\textit{\textbf{Float Point Operation:}} The dynamic symbolic execution engine we depend on will concretize symbolic write operations to \texttt{XMM} registers, which will lose some interesting paths when handling float point arithmetic operations. This problem happens for most of the MEPG process programs. So the dynamic symbolic execution engine should be upgraded to support float point arithmetic operations well in the future.
+\noindent\textit{\textbf{Float Point Operation:}} The dynamic symbolic execution engine we depend on will concretize symbolic write operations to \texttt{XMM} registers, which will lose some interesting paths when handling float point arithmetic operations. This problem happens for most of the MEPG processing programs. So the dynamic symbolic execution engine should be upgraded to support float point arithmetic operations to handle these types of programs.
+
+%TODO: list future work here
 
 \section{Related Work} \label{sec:related}
 \input{RelatedWork.tex}
 
 \section{Conclusion} \label{sec:conclusion}
-In this paper, we focused on improving the performance of hybrid testing method built on coverage based fuzz testing and dynamic symbolic execution. We proposed a novel method namely lazily concretization to deal with symbolic pointers, and this method can postpone the ``state explosion'' problem but also improve the coverage. We also made an optimization based on loop bucket to avoid generating too many states in symbolic loops. To deal with the large size of seed queue in hybrid testing, we present a distance based seed selection method to achieve more coverage when testing time is limited. This criteria of selection method is built on top of runtime information (i.e, path and memory information). We implemented a prototype and the evaluation results on some benchmarks demonstrates our method can discover more unique paths than vanilla fuzz testing, and detect more bugs when compared with other off-the-shelf vulnerability discovery tools.
+In this paper, we focused on improving the performance of hybrid testing method built on coverage based fuzz testing and dynamic symbolic execution. We proposed a novel method, lazily concretization, to deal with symbolic pointers. We found that this method can postpone the ``state explosion'' problem and also improve code coverage. We also made an optimization based on loop bucket to avoid generating too many states in symbolic loops. To deal with the large size of seed queue in hybrid testing, we present a distance based seed selection method to achieve more coverage when testing time is limited. This criteria of selection method is built on top of runtime information (i.e, path and memory information). We implemented a prototype and the evaluation results on some benchmarks demonstrates our method can discover more unique paths than vanilla fuzz testing, and detect more bugs when compared with other off-the-shelf vulnerability discovery tools.
 
 %\section{Length}\label{sec3}
 %

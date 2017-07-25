@@ -11,7 +11,7 @@ More specifically, RQ1 investigates the bug discovery ability of our prototype a
 %TODO: experimental setups, including the OS, RAM, and CPUs.
 
 \subsection{Vulnerability Detection (RQ1)}
-We evaluated the bug discovery ability of our method with two different benchmarks and some real world software. The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which is released in 2016 to test different vulnerability discovery tools \cite{dolan2016lava}. In the following sections, we are going to introduce the two benchmarks, and discuss the testing results of our prototype as well as other off-the-shelf vulnerability discovery tools (LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
+We evaluated the bug discovery ability of our method with two different benchmarks and some real world software. The first benchmark is a demo program which is named as \emph{CommonMB}. The second benchmark is \emph{LAVA}, which was released in 2016 to test different vulnerability discovery tools \cite{dolan2016lava}. In the following sections, we are going to introduce the two benchmarks, and discuss the testing results of our prototype as well as other off-the-shelf vulnerability discovery tools (LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
 
 \subsubsection{CommonMB}
 \noindent The \emph{CommonMB} benchmark is a demo program which contains 9 different memory error bugs. These bugs can be triggered only when feeding the program with specifically crafted input. There are four different kinds of functions in this benchmark, i.e., 2 compare-style functions, 3 math-style functions, 2 checksum-style functions and 2 logic-style functions. The compare functions contains bugs that can only be triggered when the values of specific parts of the input equal to specific constant immediate numbers; the bugs in math functions can be triggered when the results of math operation on some specific parts of the input equal to specific constant immediate numbers; the checksum related bugs can only be triggered when the input data successfully goes through the checksum checking points; and the logic bugs utilize two simple logical games (maze and semi-sudoku) as the constraints for triggering the bugs, which means the bugs can only be triggered when the testing engine successfully solves the games.
@@ -112,9 +112,9 @@ In 2016, Dolan-Gavitt et.al. developed a technique, namely LAVA, to automaticall
 \end{tabular*}}{}
 \end{table}
 
-Table~\ref{LAVA-1} summarized the results of bug finding evaluation on \textit{LAVA-1} from LAVA paper as well as some popular off-the-shelf tools (AFL and S2E). The maximum testing time for each bug was five hours. From this table, we can see that the \textbf{FUZZER} and \textbf{SES} mentioned in the paper only found 23 bugs and 6 bugs respectively in total. AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) but it outperformed S2E in larger ranges. 
+Table~\ref{LAVA-1} summarized the results of bug finding evaluation on \textit{LAVA-1} from the LAVA paper as well as some popular off-the-shelf tools (AFL and S2E). The maximum testing time for each bug was five hours. From this table, we can see that the \textbf{FUZZER} and \textbf{SES} mentioned in the paper only found 23 bugs and 6 bugs respectively in total. AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) but it outperformed S2E in larger ranges. 
 
-Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. Particularly, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. 
+Our prototype discovered 62 bugs which was much more than the FUZZER and the SES tools separately. In particular, we triggered all the bugs in $2^7$ and $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be touched effectively by the FUZZER and SES tools. 
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and SES which are mentioned in the LAVA paper. We also listed the results of VUzzer and our prototype in this table. 
 \begin{table}[!b]
@@ -132,12 +132,12 @@ Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER and 
 \end{table}
 
 
-As mentioned in the paper of LAVA, SES cannot find any bugs in \texttt{uniq} and \texttt{md5sum}. And the reasons are the control flow is too unconstrained in \texttt{uniq} and SES failed to execute any code past the first instance of the hash function. Because our symbolic execution is driven by a concrete seed input, so these two problems will be eased to a large extent which led to finding more bugs. Particularly, for program \texttt{md5sum}, VUzzer can only trigger one bug because it fails to get through the first crash to parse more of any input, whereas our prototype successfully triggered 29 bugs in \texttt{md5sum}.
+As mentioned in the LAVA paper, SES cannot find any bugs in \texttt{uniq} and \texttt{md5sum}. And the reasons are the control flow is too unconstrained in \texttt{uniq} and SES failed to execute any code past the first instance of the hash function. Because our symbolic execution is driven by a concrete seed input, these two problems will be eased to a large extent, leading to the discovery of more bugs. Particularly, for program \texttt{md5sum}, VUzzer can only trigger one bug because it fails to get through the first crash to parse more of any input, whereas our prototype successfully triggered 29 bugs in \texttt{md5sum}.
 
 \subsubsection{Real-World Programs}
-We selected several real world programs to evaluate the ability of unknown bug discovery of our system. The input types of this dataset cover ELF binary, multi-media, image, and packet capture. In order to demonstrate the efficiency, we also compared our results with AFL and VUzzer. We ran each program under the same testing environment with one fuzzing node for 24 hours. 
+We selected several real world programs to evaluate the ability of unknown bug discovery of our system. The input types of this dataset cover ELF binary, multi-media, image, and packet capture. In order to demonstrate the efficiency of our system, we also compared our results with AFL and VUzzer. We ran each program under the same testing environment with one fuzzing node for 24 hours. 
 
-Table~\ref{zero-days} shows the results of the testing. 
+Table~\ref{zero-days} shows the results of our testing. 
 From the table we can see that during 24 hours, our prototype triggered 403 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes) and VUzzer (192 unique crashes). 
 We can also derive from this table that our method gains little for \texttt{mp3gain} and \texttt{madplay}. This is because our symbolic execution engine does not support the float number operation when handing MPEG/WAV format (for example, all the writing operation to \texttt{XMM} registers will be concretized). This concretization lost some interesting paths and made less contribution to bug finding(only 2 more bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
 This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain} than our prototype. 
