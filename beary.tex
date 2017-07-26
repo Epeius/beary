@@ -14,25 +14,18 @@
 
 \title{Discover Deeper Bugs with Dynamic Symbolic Execution and Coverage-based Fuzz Testing}
 
-\author{\au{Bin Zhang$^{1,2\corr}$}, \au{Chao Feng$^{1}$}, \au{Adrian Herrera$^2$}, \au{George Candea$^2$},  \au{Chaojing Tang$^{1}$}}
+\author{\au{Bin Zhang$^{1,2\corr}$}, \au{Chao Feng$^{1}$}, \au{Vitaly Chipounov$^3$}, \au{Adrian Herrera$^2$}, \au{George Candea$^2$},  \au{Chaojing Tang$^{1}$}}
 %
 \address{\add{1}{School of Electronic Science and Engineering, National University of Defense Technology (NUDT), Changsha, Hunan, People's Republic of China}
 \add{2}{School of Computer and Communication Sciences, École Polytechnique Fédérale de Lausanne (EPFL), Lausanne, Switzerland}
+\add{3}{Cyberhaven Headquarters, 401 Park Drive, Suite 811 Boston, MA 02215, USA}
 \email{bizh4ng@hotmail.com}}
 
 \begin{abstract}
-%Coverage based fuzz testing and dynamic symbolic execution are both popular program testing techniques in the security research community. However, both of them suffer from scalability problems when considering the size and complexity of modern software. Hybrid testing methods mitigate the scalability problem by leveraging dynamic symbolic execution to help generate corner test cases for fuzz testing. Although dynamic symbolic execution is guaranteed to cover all possible paths theoretically, it still cannot deal well with some specific program structures. Meanwhile, the size of the seed queue of coverage based fuzzer will become larger with the help of dynamic symbolic execution. The seed queue should be rearranged to improve the coverage when given the testing time budget.
-%
-%
-%In this paper, we introduced two improvements to ease the state explosion problem raised by dynamic symbolic execution in hybrid testing method. 
-% These two improvements focus on symbolic pointers and loops and present a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization. 
-% We also proposed a distance based seed selection method to rearrange the seed queue of coverage based fuzzer to achieve higher coverage in the time budget. 
-% We implemented a prototype and evaluated it from two viewpoints: path and vulnerability discovery.
-% The experimental results on three different benchmarks, a demo program, recently released LAVA benchmark, and a set of real-world programs on UNIX, show that our prototype can trigger more crashes than some off-the-shelf vulnerability detection tools in all of these benchmarks. Additionally, the evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing for our benchmark. 
 Coverage-based fuzz testing and dynamic symbolic execution are both popular program testing techniques. However, on their own, both techniques suffer from scalability problems when considering the complexity of modern software. Hybrid testing methods attempt to mitigate these problems by leveraging dynamic symbolic execution to assist fuzz testing. Unfortunately, the efficiency of such methods are still limit by some specific program structures and the schedule of seed files.
 
 In this paper, we introduced a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization to ease the state explosion raised by dynamic symbolic execution in hybrid testing.
-We also proposed a distance based seed selection method to rearrange the seed queue of the fuzzer to achieve higher coverage in a given time budget. We implemented a prototype and evaluated it from two viewpoints: vulnerability and path discovery. 
+We also proposed a distance based seed selection method to rearrange the seed queue of the fuzzer to achieve higher coverage. We implemented a prototype and evaluated it from two viewpoints: vulnerability and path discovery. 
 The vulnerability discovery results on three different benchmarks (
 a demo program, the LAVA benchmark, and a set of real-world programs) show that our prototype can trigger more crashes than other off-the-shelf vulnerability detection tools in all of these benchmarks. Additionally, the path discovery evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing.
 \end{abstract}
