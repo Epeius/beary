@@ -14,28 +14,28 @@ Our method is built on top of coverage based fuzz testing and dynamic symbolic e
 This section will briefly propose some possible future research areas in vulnerability detection.
 
 \subsubsection{Binary Transformations}
-Considering the size and complexity of modern software, dynamic symbolic execution still faces the scalability problem. 
- Optimizations in compiler have deep affect to dynamic symbolic execution. 
- In 2013, J. Wagner et, al. proposed a new option \textsc{-Overify} which generates code optimized for the needs of verification tools.
+Dynamic symbolic execution still faces scalability problem when considering the size and complexity of modern software. 
+ Compiler optimizations can have a large impact on dynamic symbolic execution's effectiveness. 
+ In 2013, J. Wagner et, al. proposed a new compiler option \textsc{-Overify} to generate code optimized specifically for verification tools.
   Their experiments' results show that \textsc{-Overify} can reduce verification time by up to 95x for GNU Coreutils \cite{wagner2013overify}.
- As discussed in \cite{Cadar:2015:TPT}, flag \texttt{-O0} of LLVM compiler can contribute different paths from flag \texttt{-O2} (which contributes 1024 and 2 paths respectively for its sample code).
- C. Cadar claims that one should treat program transformations as first-class ingredients of scalable symbolic execution, alongside widely-accepted aspects such as search heuristics and constraint solving optimizations \cite{Cadar:2015:TPT}. 
+ As discussed in \cite{Cadar:2015:TPT}, LLVM compiler's \texttt{-O0} flag can contribute different paths from flag \texttt{-O2} (which contributes 1024 and 2 paths respectively for its sample code).
+ Cadar claims that one should treat program transformations as first-class ingredients of scalable symbolic execution, alongside widely-accepted aspects such as search heuristics and constraint solving optimizations \cite{Cadar:2015:TPT}. 
  
-With such insight, we propose that, in the future, binary executables should be pre-processed to transform \textit{testing-expensive} code structures to \textit{testing-cheap} ones.
-  Similar as what is implemented in \cite{wagner2015high}, the binary pre-processing stage should recognize which code areas are the testing ``hot spot'' and remove/transform them to avoiding getting stuck in such areas.
-  These transformations can either be semantics-preserving or semantic-altering transformations. 
- And the key problem is how to perform these transformations on binary level since many high level program information have been lost during compiling. 
+With this insight, we propose that in the future, binary executables should be pre-processed to transform \textit{testing-expensive} code structures to \textit{testing-cheap} ones.
+  Similar to \cite{wagner2015high}, the binary pre-processing stage should recognize which code areas are the testing ``hot spot'' and remove/transform them to avoiding getting stuck in such areas.
+  These transformations can either be semantic-preserving or semantic-altering transformations. 
+ The key research problem is how to perform these transformations on binary level, since most high level program information is lost during compilation. 
  On possible solution to achieve such transformations is to lift binary code into intermediate expression such as LLVM byte code, then perform more analysis to recover program information such as control flow graph, data dependency, and control dependency. 
 
 \subsubsection{Finding Bugs with Machine Learning}
 Many research papers treat the vulnerability detection with dynamic symbolic execution and fuzz testing as a search problem.
- Since the search space of modern software can be vast,exhaustively exploration of the program's space is impossible so far.
- Reducing the search space can lead to better coverage in a reduced test scope.
+ Since the search space of modern software can be vast, exhaustive exploration of this space is currently impossible.
+ Reducing the search space may lead to better coverage.
  However, this may miss interesting sub-spaces where contain vulnerabilities. 
- In order to find more deeper bugs when reducing the search space, one has to locate \textit{secure-sensitive code areas} based on static analysis, and then uses search heuristics to guide the program execute to these areas.
- Since each type of vulnerability has its unique characteristic \cite{MBishop:ATBOC, wang2009intscope, wang2010ricb}, 
+ In order to find deeper bugs when reducing the search space, one has to locate \textit{secure-sensitive code areas} based on static analysis, and then uses search heuristics to guide the program exercise these areas.
+ Since each type of vulnerability has its own unique characteristic \cite{MBishop:ATBOC, wang2009intscope, wang2010ricb}, 
  some researchers have attempted to use machine learning to automatically extract such characteristics in source code, and then predict potential vulnerabilities \cite{VCCFinder, Yamaguchi:2011:VEA}.
 
-In 2016, G. Grieco et, al. proposed a binary software vulnerability predict tool \textsc{VDiscover} as well as a public dataset that collects raw analyzed data \cite{Grieco:2016:TLV}. 
- And they managed to predict with reasonable accuracy which programs contained dangerous memory corruptions.
- So based on such work progress, we propose that, in the future, machine learning can be ported to binary software vulnerability detection by cooperating with guided testing method. Since machine learning may raise false positives, one can leverage guided dynamic symbolic execution to mitigate the false positives and verify the existence of potential vulnerabilities.
+In 2016, Grieco et, al. proposed a binary software vulnerability predict tool \textsc{VDiscover} as well as a public dataset that collects raw analyzed data \cite{Grieco:2016:TLV}. 
+ They ``managed to predict with reasonable accuracy which programs contained dangerous memory corruptions'' \cite{Grieco:2016:TLV}.
+ Based on such work, we propose that in the future, machine learning could be ported to binary software vulnerability detection by cooperating with guided testing techniques. Since machine learning can raise many false positives, one can leverage guided dynamic symbolic execution to mitigate the false positives and verify the existence of potential vulnerabilities.
