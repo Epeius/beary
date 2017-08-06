@@ -10,7 +10,7 @@ fuzz testing and dynamic symbolic execution.
 Symbolic execution is an analysis method to determine what input can
 drive execution to specific code regions \cite{King:Symbex}. It
 interprets the program by assigning \textit{symbolic data} rather than
-actual data to the program inputs.
+actual (\textit{concrete}) data to the program inputs.
 
 Consider a program $P$ which consists of a set of program variables
 $Var$ and a set of instructions $Inst$. Dynamic symbolic execution
@@ -21,7 +21,7 @@ which maps $Var$ to symbolic expressions, and $pc$ is the symbolic path
 constraint which is a first order quantifier free formula over symbolic
 expressions.
 
-Under dynamic symbolic execution, program $P$ operates both concrete
+Under dynamic symbolic execution, program $P$ operates on both concrete
 memory $M$ and symbolic memory $S$ by executing each instruction $I\in
 Inst$. The semantics for different types of instructions are listed in
 Table~\ref{table:DSE-inst}.
@@ -37,6 +37,11 @@ Conditional  &  \textbf{if} $e$ \textbf{then} $I_{true}$ \textbf{else} $I_{false
 \botrule
 \end{tabular*}}{}
 \end{table}
+
+% VC: isn't symbex about exploring all states? Number of states is finite,
+% number of paths is not. Would also need to make sure path/state is
+% used consistently in the paper. Need better formalization for state.
+% Perhaps you cound get inspiration from state machine definition.
 
 The objective of dynamic symbolic execution is to systematically
 explore all feasible paths of program $P$ under the initial input.
@@ -55,23 +60,21 @@ satisfying assignments to Boolean expression $pc\wedge\neg e$ will
 steer $P$ to run the \textit{else} branch. Dynamic symbolic execution
 tries to explore both \textit{then} and \textit{else} branches
 simultaneously by \textit{state forking}. To fork a new state, dynamic
-symbolic execution employs a constraint solver $T$ to generate
+symbolic execution uses a constraint solver $T$ to generate
 solutions both for $pc\wedge e$ and $pc\wedge\neg e$ and updates the
-symbolic memory accordingly. By forking new program state for each
+path constraints accordingly. By forking new program state for each
 executed conditional instruction, all possible path constraints can be
 enumerated and eventually all feasible paths in $P$ can be exercised.
 Whenever dynamic symbolic execution executes a terminate instruction,
 it terminates the current state and employs the constraint solver to
 solve the current $pc$ to generate a corresponding \textit{test input}.
 
-One of the key challenges of dynamic symbolic execution when being
-applied to modern software is the huge number of program paths. Since
-dynamic symbolic execution forks states for each conditional
-instruction, the total number of states will grow exponentially in the
-number of conditional instructions \cite{cadar2013symbolic}. This is
-known as ``\textit{state explosion}'' problem. A huge number of states
-will quickly exhaust computation resources (e.g., bring serious
-\textit{memory overhead}) and even halt testing.
+Dynamic symbolic execution is affected by the \textit{state explosion}
+problem. Since dynamic symbolic execution may fork a new state for
+every conditional branch, the number of states may grow exponentially
+in the number of conditional instructions~\cite{cadar2013symbolic}. A
+large number of states will quickly exhaust computation resources halt
+testing.
 
 \lstinputlisting[label={PRE}, language=C,style=c,caption={A motivating
 code for preliminaries. Note that all example code in this paper is
@@ -81,15 +84,21 @@ directly on binary programs.}]{codes/pre.c}
 \subsection{Hybrid Testing}
 
 The sample program in Listing~\ref{PRE} tries to verify the three input
-parameters. Hybrid testing starts from a coverage based fuzzer which
-can quickly generate an input that satisfies the \textit{else} branch
+parameters. Hybrid testing starts from a coverage-based fuzzer which
+quickly generates an input that satisfies the \textit{else} branch
 of the conditional instruction at line 2. However, verification of
-\texttt{checksum} at line 5 will typically prevent the fuzzer from
-going any further. Once a fuzzer gets stuck, hybrid testing switches to
+\texttt{checksum} at line 5 would typically prevent the fuzzer from
+going any further. When the fuzzer gets stuck, hybrid testing switches to
 dynamic symbolic execution engine to get more coverage.
 
-The basic framework of hybrid testing approach based on fuzz testing
-and symbolic execution is shown in Figure~\ref{s2e-assist}. The fuzzing
+% VC: explain what a bitmap is
+% VC: whenever you use a new word, define it
+% VC: name your tool somehow and refer to it with \tool macro
+% VC: use topic sentences for every paragraph. A reader must be
+% able to understand the paper by reading the first sentence of each paragraph.
+
+Figure~\ref{s2e-assist} shows the general architecture of a hybrid testing
+approach based on fuzz testing and symbolic execution. The fuzzing
 engine shares internal information, which is used to record the path
 information (such as the \textit{Bitmap} in AFL), with the symbolic
 execution engine. Each test case in the seed queue will be sent to
