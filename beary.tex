@@ -14,20 +14,18 @@
 
 \title{Discover Deeper Bugs with Dynamic Symbolic Execution and Coverage-based Fuzz Testing}
 
-\author{\au{Bin Zhang$^{1,2\corr}$}, \au{Chao Feng$^{1}$}, \au{Vitaly Chipounov$^3$}, \au{Adrian Herrera$^2$}, \au{George Candea$^2$},  \au{Chaojing Tang$^{1}$}}
+\author{\au{Bin Zhang$^{1,2\corr}$}, \au{Chao Feng$^{1}$}, \au{Adrian Herrera$^2$}, \au{Vitaly Chipounov$^3$}, \au{George Candea$^2$},  \au{Chaojing Tang$^{1}$}}
 %
 \address{\add{1}{School of Electronic Science and Engineering, National University of Defense Technology (NUDT), Changsha, Hunan, People's Republic of China}
 \add{2}{School of Computer and Communication Sciences, École Polytechnique Fédérale de Lausanne (EPFL), Lausanne, Switzerland}
-\add{3}{Cyberhaven Headquarters, 401 Park Drive, Suite 811 Boston, MA 02215, USA}
+\add{3}{Cyberhaven, Inc., 401 Park Drive, Suite 811 Boston, MA 02215, USA}
 \email{bizh4ng@hotmail.com}}
 
 \begin{abstract}
-Coverage-based fuzz testing and dynamic symbolic execution are both popular program testing techniques. However, on their own, both techniques suffer from scalability problems when considering the complexity of modern software. Hybrid testing methods attempt to mitigate these problems by leveraging dynamic symbolic execution to assist fuzz testing. Unfortunately, the efficiency of such methods are still limit by some specific program structures and the schedule of seed files.
+Coverage-based fuzz testing and dynamic symbolic execution are both popular program testing techniques. However, on their own, both techniques suffer from scalability problems when considering the complexity of modern software. Hybrid testing methods attempt to mitigate these problems by leveraging dynamic symbolic execution to assist fuzz testing. Unfortunately, the efficiency of such methods are still limited by specific program structures and the schedule of seed files.
 
-In this paper, we introduced a novel lazily symbolic pointer concretization method and a symbolic loop bucket optimization to ease the state explosion raised by dynamic symbolic execution in hybrid testing.
-We also proposed a distance based seed selection method to rearrange the seed queue of the fuzzer to achieve higher coverage. We implemented a prototype and evaluated it from two viewpoints: vulnerability and path discovery. 
-The vulnerability discovery results on three different benchmarks (
-a demo program, the LAVA benchmark, and a set of real-world programs) show that our prototype can trigger more crashes than other off-the-shelf vulnerability detection tools in all of these benchmarks. Additionally, the path discovery evaluation result on several real-world programs show that our method can discover 43.49\% more unique paths than vanilla fuzz testing.
+In this paper, we introduce a novel lazy symbolic pointer concretization method and a symbolic loop bucket optimization to mitigate state explosion caused by dynamic symbolic execution in hybrid testing.
+We also propose a distance-based seed selection method to rearrange the fuzzer's seed queue in order to achieve higher coverage. We implemented a prototype and evaluate its ability to find vulnerabilities in software and cover new execution paths. We show on three different benchmarks (a demo program, the LAVA benchmark, and a set of real-world programs) that our prototype can find more crashes than other off-the-shelf vulnerability detection tools. We also show that our method can discover 43\% more unique paths than vanilla fuzz testing.
 \end{abstract}
 
 \maketitle
@@ -57,7 +55,7 @@ a demo program, the LAVA benchmark, and a set of real-world programs) show that 
 \input{RelatedWork.tex}
 
 \section{Conclusion} \label{sec:conclusion}
-In this paper, we focused on improving the performance of hybrid testing method built on coverage based fuzz testing and dynamic symbolic execution. We proposed a novel method, lazily concretization, to deal with symbolic pointers. We found that this method can postpone the ``state explosion'' problem and also improve code coverage. We also made an optimization based on loop bucket to avoid generating too many states in symbolic loops. To deal with the large size of seed queue in hybrid testing, we present a distance based seed selection method to achieve more coverage when testing time is limited. This criteria of selection method is built on top of runtime information (i.e, path and memory information). We implemented a prototype and the evaluation results on some benchmarks demonstrates our method can discover more unique paths than vanilla fuzz testing, and detect more bugs when compared with other off-the-shelf vulnerability discovery tools.
+In this paper, we focused on improving the performance of hybrid testing method built on coverage based fuzz testing and dynamic symbolic execution. We proposed a novel method, lazy concretization, to deal with symbolic pointers. We found that this method mitigates the path explosion problem and improves code coverage. We also introduced the loop bucket optimization in order to avoid generating too many states in symbolic loops. In order to deal with the large size of the seed queue in hybrid testing, we presented a distance-based seed selection method to achieve more coverage when testing time is limited. This criteria of selection method is built on top of runtime information (i.e, path and memory information). The evaluation of our prototype on several benchmarks demonstrates that our method can discover more unique paths than vanilla fuzz testing and finds more bugs compared with other off-the-shelf vulnerability analysis tools.
 
 %\section{Length}\label{sec3}
 %
