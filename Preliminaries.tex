@@ -27,7 +27,8 @@ Inst$. The semantics for different types of instructions are listed in
 Table~\ref{table:DSE-inst}.
 
 \begin{table}[!b]
-\processtable{Instructions in dynamic symbolic execution\label{table:DSE-inst}}
+\processtable{Instructions in dynamic symbolic execution, as well as
+	 their expressions and semantics.\label{table:DSE-inst}}
 {\begin{tabular*}{20pc}{@{\extracolsep{\fill}}lcl@{}}\toprule
 Type  & Expression & Semantic\\
 \midrule
@@ -76,11 +77,6 @@ in the number of conditional instructions~\cite{cadar2013symbolic}. A
 large number of states will quickly exhaust computation resources halt
 testing.
 
-\lstinputlisting[label={PRE}, language=C,style=c,caption={A motivating
-code for preliminaries. Note that all example code in this paper is
-given as source code for readability, but our approach operates
-directly on binary programs.}]{codes/pre.c}
-
 \subsection{Hybrid Testing}
 
 The sample program in Listing~\ref{PRE} tries to verify the three input
@@ -91,19 +87,21 @@ of the conditional instruction at line 2. However, verification of
 going any further. When the fuzzer gets stuck, hybrid testing switches to
 dynamic symbolic execution engine to get more coverage.
 
-% VC: explain what a bitmap is
-% VC: whenever you use a new word, define it
-% VC: name your tool somehow and refer to it with \tool macro
-% VC: use topic sentences for every paragraph. A reader must be
-% able to understand the paper by reading the first sentence of each paragraph.
+\lstinputlisting[label={PRE}, language=C,style=c,caption={A motivating
+	code for preliminaries. Note that all example code in this paper is
+	given as source code for readability, but our approach operates
+	directly on binary programs.}]{codes/pre.c}
 
 Figure~\ref{s2e-assist} shows the general architecture of a hybrid testing
-approach based on fuzz testing and symbolic execution. The fuzzing
-engine shares internal information, which is used to record the path
-information (such as the \textit{Bitmap} in AFL), with the symbolic
-execution engine. Each test case in the seed queue will be sent to
-symbolic execution engine to disclose more new paths. Unlike
-traditional dynamic symbolic execution, the symbolic execution engine
+approach based on fuzz testing and symbolic execution. The fuzzing engine 
+performs coverage-based fuzz testing, and shares the already explored 
+path information with the symbolic execution engine. This already explored 
+path information can be recorded in any forms. For example, AFL 
+intercepts transitions between basic blocks as well as the branch-taken 
+hit counts, and store these information into a \textit{Bitmap}.
+Then each test case in the seed queue will be sent to symbolic execution 
+engine to disclose more new paths.
+Unlike traditional dynamic symbolic execution, the symbolic execution engine
 only forks for branches that have not been previously covered. For
 example, as shown in Figure~\ref{s2e-assist}, suppose the red execution
 trace is the path that the fuzzer will taken. In this case the symbolic
