@@ -8,6 +8,8 @@
 \newtheorem{remark}{Remark}{}
 \usepackage[utf8]{inputenc}
 
+\newcommand{\prototype}{\textsc{Breacher} }
+
 \begin{document}
 
 \supertitle{Submission Template for IET Research Journal Papers}
@@ -46,10 +48,10 @@ method and a symbolic loop bucket optimization to mitigate state explosion
 caused by dynamic symbolic execution in hybrid testing.
 We also propose a distance-based seed selection method to rearrange the 
 fuzzer's seed queue in order to achieve higher coverage. We implemented 
-a prototype and evaluate its ability to find vulnerabilities in software 
+a prototype \prototype and evaluate its ability to find vulnerabilities in software 
 and cover new execution paths. We show on three different benchmarks (a 
 demo program, the LAVA benchmark, and a set of real-world programs) that 
-our prototype can find more crashes than other off-the-shelf vulnerability 
+\prototype can find more crashes than other off-the-shelf vulnerability 
 detection tools. We also show that our method can discover 43\% more 
 unique paths than vanilla fuzz testing.
 \end{abstract}
@@ -91,7 +93,7 @@ states in symbolic loops. In order to deal with the large size of
 the seed queue in hybrid testing, we presented a distance-based seed 
 selection method to achieve more coverage when testing time is limited. 
 This criteria of selection method is built on top of runtime information 
-(i.e, path and memory information). The evaluation of our prototype 
+(i.e, path and memory information). The evaluation of \prototype 
 on several benchmarks demonstrates that our method can discover more 
 unique paths than vanilla fuzz testing and finds more bugs compared 
 with other off-the-shelf vulnerability analysis tools.

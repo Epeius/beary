@@ -2,7 +2,7 @@ In the experimental evaluation part, we address the following
 research questions:
 \begin{itemize}
 \setlength{\itemsep}{0pt}
-\item {\textbf{RQ1:} Can our prototype discover more deeper bugs?}
+\item {\textbf{RQ1:} Can \prototype discover more deeper bugs?}
 \item {\textbf{RQ2:} Can distance based seed selection method 
 	improve performance of path discovery?}
 \item {\textbf{RQ3:} How does each component contribute to 
@@ -10,12 +10,12 @@ research questions:
 \end{itemize}
 
 More specifically, RQ1 investigates the bug discovery ability of 
-our prototype and compares the results with other vulnerability 
+\prototype and compares the results with other vulnerability 
 detection tools including fuzz testing and dynamic symbolic execution. 
 RQ2 evaluates our distance based seed selection on several 
 real-world programs to see whether our method can discover more 
 unique paths than the state-of-the-art fuzzer: AFL. RQ3 evaluates 
-the unique path discovery performance of whole prototype and 
+the unique path discovery performance of \prototype and 
 investigates the performance contribution of each isolated 
 component (i.e. \textit{SPF} and \textit{Searcher}).
 
@@ -28,7 +28,7 @@ benchmark is a demo program which is named as \emph{CommonMB}.
 The second benchmark is \emph{LAVA}, which was released in 2016 
 to test different vulnerability discovery tools \cite{dolan2016lava}. 
 In the following sections, we are going to introduce the 
-two benchmarks, and discuss the testing results of our prototype
+two benchmarks, and discuss the testing results of \prototype
 as well as other off-the-shelf vulnerability discovery tools 
 (LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
 
@@ -58,7 +58,7 @@ So evaluating a vulnerability detection tool on such a benchmark can
 reflect its ability of discovering bugs in real world programs.
 
 Table~\ref{CommonMB-results-detail} shows the overall results of 
-different vulnerability discovery tools as well as our prototype 
+different vulnerability discovery tools as well as \prototype 
 with same test environment (10 cores and 12 hours).
 % Explain the result like that cmp-style vulnerabiities are easy to find
 We can see that all these tools have successfully triggered the 
@@ -82,7 +82,7 @@ which raise the serious ``state explosion'' problem.
 
 S2E provides function models for basic functions that may fork too 
 many states, like \texttt{strcpy}, \texttt{strcat}, \texttt{crc16},
- and \texttt{crc32}. Based on these models, S2E and our prototype 
+ and \texttt{crc32}. Based on these models, S2E and \prototype 
  discovered the two bugs that related to checksum successfully 
  (note that this does not mean S2E can break these checksum functions). 
 
@@ -91,13 +91,13 @@ because the number of states will be infinite in the worse case.
 For example, when solving a maze, the possible oscillation between 
 two opposite steps (such as step forward and step backward) 
 will stop the engine from finding new paths.
-With the help of our seed selection method, our prototype selected 
+With the help of our seed selection method, \prototype selected 
 the seed file with the maximum average distance to schedule. 
 Since this distance metric tries to maximize the memory coverage, 
-our prototype successfully triggered the bug after covering all 
+\prototype successfully triggered the bug after covering all 
 the memory access to the maze array. 
 % Explain why the sudodu is so hard to touch
-However, our prototype failed to trigger the bug in \textit{sudoku}. 
+However, our \prototype failed to trigger the bug in \textit{sudoku}. 
 This is because different seed files of the \textit{sudoku} have no 
 significant differences (i.e., no more code/branch and memory coverage), 
 which confuses our seed selection method.
@@ -116,7 +116,7 @@ which confuses our seed selection method.
 		KLEE		& Y & Y & Y & N & N & N & N & N & N & 3\\
 		S2E			& Y & Y & Y & Y & Y & Y & Y & N & N & 7\\
 		Driller		& Y & Y & Y & Y & Y & N & N & N & N & 5\\
-		Prototype	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
+		\prototype	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
 \botrule
 \end{tabular*}}{}
 \end{table*}
@@ -156,7 +156,7 @@ designed to work for a long time on programs that may contain multiple bugs.
 		SES	        & 1   & 0   & 1    & 3     & 0     & 1  \\
 		AFL		    & 0   & 0   & 2    & 10    & 9     & 1   \\
 		S2E			& 3   & 2   & 3    & 4     & 3     & 2   \\
-		Prototype	& 10  & 10  & 11   & 13    & 11    & 7   \\
+		\prototype	& 10  & 10  & 11   & 13    & 11    & 7   \\
 \botrule
 \end{tabular*}}{}
 \end{table}
@@ -169,14 +169,14 @@ mentioned in the paper only found 23 bugs and 6 bugs respectively in total.
 AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) 
 but it outperformed S2E in larger ranges. 
 
-Our prototype discovered 62 bugs which was much more than the FUZZER and the 
+\prototype discovered 62 bugs which was much more than the FUZZER and the 
 SES tools separately. In particular, we triggered all the bugs in $2^7$ and 
 $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be 
 touched effectively by the FUZZER and SES tools. 
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER 
 and SES which are mentioned in the LAVA paper. We also listed the results 
-of VUzzer and our prototype in this table. 
+of VUzzer and \prototype in this table. 
 \begin{table}[!b]
 \processtable{Evaluation results on \textit{LAVA-M}\label{LAVA-M}}
 {\begin{tabular*}{20pc}{@{\extracolsep{\fill}}cccccc@{}}\toprule
@@ -186,7 +186,7 @@ of VUzzer and our prototype in this table.
 		FUZZER 		& 7  & 2  & 7    & 0   & 16  \\
 		SES	        & 9  & 0  & 0    & 18  & 27  \\
 		VUzzer		& 17 & 1* & 27   & 50  & 95 \\
-		Prototype	& 37 & 29 & 28   & 203 & 297 \\
+		\prototype	& 37 & 29 & 28   & 203 & 297 \\
 \botrule
 \end{tabular*}}{}
 \end{table}
@@ -199,7 +199,7 @@ the hash function. Because our symbolic execution is driven by a concrete seed
 input, these two problems will be eased to a large extent, leading to the 
 discovery of more bugs. Particularly, for program \texttt{md5sum}, VUzzer can 
 only trigger one bug because it fails to get through the first crash to parse 
-more of any input, whereas our prototype successfully triggered 29 bugs in 
+more of any input, whereas \prototype successfully triggered 29 bugs in 
 \texttt{md5sum}.
 
 \subsubsection{Real-World Programs}
@@ -210,7 +210,7 @@ of our system, we also compared our results with AFL and VUzzer. We ran each
  program under the same testing environment with one fuzzing node for 24 hours. 
 
 Table~\ref{zero-days} shows the results of our testing. 
-From the table we can see that during 24 hours, our prototype triggered 403 
+From the table we can see that during 24 hours, \prototype triggered 403 
 unique crashes in the dataset which outperformed vanilla AFL (181 unique crashes) 
 and VUzzer (192 unique crashes). 
 We can also derive from this table that our method gains little for \texttt{mp3gain} 
@@ -220,7 +220,7 @@ writing operation to \texttt{XMM} registers will be concretized). This concretiz
 lost some interesting paths and made less contribution to bug finding(only 2 more 
 bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
 This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain} 
-than our prototype. 
+than \prototype. 
 It is interesting that AFL detected 15 more bugs in \texttt{elfparser} than VUzzer. 
 This is because the fork server method leveraged in AFL enables the fuzzer can 
 execute 51.6x more test cases than VUzzer in the same time, which can also increase 
@@ -229,7 +229,7 @@ the probability of finding bugs.
 \begin{table*}[!t]
 \processtable{Performance of our method VS. AFL \& VUzzer on unknown crashes.\label{zero-days}}
 {\begin{tabular}{lccccccc}\toprule
-	& & \multicolumn{2}{c}{Our Prototype} & \multicolumn{2}{c}{AFL} & \multicolumn{2}{c}{VUzzer}\\
+	& & \multicolumn{2}{c}{\prototype} & \multicolumn{2}{c}{AFL} & \multicolumn{2}{c}{VUzzer}\\
 		    Program & Input Type & Crashes (\#) & Executed (\#)& 
 		    Crashes (\#) & Executed  (\#) & Crashes (\#) & Executed (\#) \\
 \midrule
@@ -392,7 +392,7 @@ searcher (\textit{SEHT with SPF and CS Searcher}). For example, the number
 of unique paths discovered by \textit{SEHT} is increased by 
 49.57\% for \texttt{objdump}. In average, the performance of \textit{SEHT} 
 is improved by 24.44\% after introducing SPF and CS searcher. From an 
-overall viewpoint, our prototype can discover 43.49\% more unique paths 
+overall viewpoint, \prototype can discover 43.49\% more unique paths 
 than vanilla AFL fuzz testing for our benchmark. This improvement is 
 because that seeds file with longest distance from already-explored 
 spaces have higher likelihood to trigger more fresh branches/paths, 

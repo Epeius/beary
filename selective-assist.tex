@@ -91,14 +91,13 @@ it. Meanwhile, the path constraint of the original state will
 be appended with the hard constraint $\texttt{buf[i]}=\texttt{`A'}$.
 By doing this, the ``state explosion'' problem is postponed to a later moment.
 
-%TODO: need to be rewritten
 However, the hard constraint may reduce the suffix feasible paths 
 to a very small group. For example, suppose the address of a symbolic 
 pointer can be expressed as $e_{addr}=f(v_1, v_2,\cdots, v_n)$, 
 where $v_1, v_2,\cdots, v_n\in Var$ are variables of program $P$. 
 Then expression $condition:= EQ(e_{addr}, M(e_{addr}))$ will limit 
 the current execution path only feasible when ($v_1, v_2,\cdots, v_n$) 
-equals to ($M(v_1), M(v_2),\cdots, M(v_n)>$). 
+equals to ($M(v_1), M(v_2),\cdots, M(v_n)$). 
 
 Take the sample code in Listing~\ref{RE-LCSP}. The execution path 
 to line 26 will be infeasible because the hard constraint limits 
