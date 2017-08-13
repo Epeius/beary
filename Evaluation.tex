@@ -12,7 +12,9 @@ research questions:
 More specifically, RQ1 investigates the bug discovery ability of 
 \prototype and compares the results with other vulnerability 
 detection tools including fuzz testing and dynamic symbolic execution. 
-RQ2 evaluates our distance based seed selection on several 
+For RQ2 and RQ3, we choose to use AFL's \textit{unique paths} as performance evaluation criterion since it is a key factor to reflect the 
+performance of a path-based program testing tool.
+RQ2 evaluates distance based seed selection on several 
 real-world programs to see whether our method can discover more 
 unique paths than the state-of-the-art fuzzer: AFL. RQ3 evaluates 
 the unique path discovery performance of \prototype and 
@@ -78,7 +80,7 @@ triggered all these three bugs since symbolic execution is good at
 solving such corner cases. One interesting point in this table is that 
 KLEE failed to trigger \textit{add32} and \textit{complex} bugs. 
 This is because KLEE forks too many states in checksum functions 
-which raise the serious ``state explosion'' problem. 
+which raise the serious path explosion problem. 
 
 S2E provides function models for basic functions that may fork too 
 many states, like \texttt{strcpy}, \texttt{strcat}, \texttt{crc16},

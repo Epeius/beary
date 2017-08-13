@@ -13,13 +13,22 @@ interprets the program by assigning \textit{symbolic data} rather than
 actual (\textit{concrete}) data to the program inputs.
 
 Consider a program $P$ which consists of a set of program variables
-$Var$ and a set of instructions $Inst$. Dynamic symbolic execution
-maintains a symbolic state $s=<I,M,S,pc>$, where $I\in Inst$ denotes
-the next instruction to be executed, $M$ is the concrete memory store
-which maps $Var$ to concrete data, $S$ is the symbolic memory store
-which maps $Var$ to symbolic expressions, and $pc$ is the symbolic path
-constraint which is a first order quantifier free formula over symbolic
-expressions.
+$Var$ and a set of instructions $Inst$. 
+An \textbf{\textit{execution path}} is a serial of instructions, such as 
+$I_0\rightarrow I_1 \rightarrow \cdots\rightarrow I_n$, where $I_i\in Inst$.
+Unlike execution path, which only focuses on instructions, a 
+\textbf{\textit{program state}} also contains the value of each variable. 
+So multiple states can be mapped to the same execution path. 
+
+Dynamic symbolic execution
+maintains a \textbf{\textit{symbolic state}} $s=<I,M,S,pc>$, where 
+$I\in Inst$ denotes the next instruction to be executed, 
+$M$ is the concrete memory store which maps $Var$ to concrete data, 
+$S$ is the symbolic memory store which maps $Var$ to symbolic expressions, 
+and $pc$ is the symbolic path constraint which is a first order 
+quantifier free formula over symbolic expressions. Since each symbolic state can be individually mapped to an execution path, we can use \textit{symbolic state} to equivalently represent an execution path.
+In the following sections of this paper, all \textit{states} denote the \textit{symbolic state} unless explicitly stated. And ``path explosion'' 
+can also be expressed as ``state explosion''.
 
 Under dynamic symbolic execution, program $P$ operates on both concrete
 memory $M$ and symbolic memory $S$ by executing each instruction $I\in
@@ -38,11 +47,6 @@ Conditional  &  \textbf{if} $e$ \textbf{then} $I_{true}$ \textbf{else} $I_{false
 \botrule
 \end{tabular*}}{}
 \end{table}
-
-% VC: isn't symbex about exploring all states? Number of states is finite,
-% number of paths is not. Would also need to make sure path/state is
-% used consistently in the paper. Need better formalization for state.
-% Perhaps you cound get inspiration from state machine definition.
 
 The objective of dynamic symbolic execution is to systematically
 explore all feasible paths of program $P$ under the initial input.
@@ -70,7 +74,7 @@ Whenever dynamic symbolic execution executes a terminate instruction,
 it terminates the current state and employs the constraint solver to
 solve the current $pc$ to generate a corresponding \textit{test input}.
 
-Dynamic symbolic execution is affected by the \textit{state explosion}
+Dynamic symbolic execution is affected by the \textit{path explosion}
 problem. Since dynamic symbolic execution may fork a new state for
 every conditional branch, the number of states may grow exponentially
 in the number of conditional instructions~\cite{cadar2013symbolic}. A
@@ -113,10 +117,10 @@ hybrid testing method, the verification of \texttt{header->checksum} at
 line 5 can be solved by symbolic execution engine and generate a new
 test case for further fuzzing.
 
-However, function \texttt{state\_explosion} prevents symbolic execution
+However, function \texttt{path\_explosion} prevents symbolic execution
 from solving the conditional instruction as line 9. This is because in
 hybrid testing, the total number of symbolic state is limited by an
 upper bound budget to avoid serious memory overhead
-\cite{stephens2016driller}. As \texttt{state\_explosion} saturates the
+\cite{stephens2016driller}. As \texttt{path\_explosion} saturates the
 budget, no more forking will happen.  We will discuss our mitigation
 for this problem in Section~\ref{sec:ease PE}.

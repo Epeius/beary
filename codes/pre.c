@@ -5,7 +5,7 @@ int check(int magic, int checksum, int flag) {
     if (checksum != bswap_32(checksum)) {
         perror("Checksum incorrect!\n");
     }
-    state_explosion(); // state explosion here
+    path_explosion(); // path explosion here
     if (flag == CRASH) {
         abort(); // bug here
     }

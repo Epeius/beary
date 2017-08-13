@@ -37,20 +37,20 @@ immediately once a non-plain ASCII text character appears.
 Since \texttt{buf[i]} has 256 possible values (\textit{unsigned char}), 
 then the symbolic engine will fork state for each possible value (i.e., 
 full symbolic memory model).This will cause the code at Line 18 to fork 
-$256^{nbytes}$ states, causing state explosion. The bug nested at line 26 
+$256^{nbytes}$ states, causing path explosion. The bug nested at line 26 
 will only be triggered when the states that satisfy the path condition 
 are scheduled for execution, which may never practically occur in the 
-face of state explosion. For example, suppose \texttt{nbytes} is 4, then 
+face of path explosion. For example, suppose \texttt{nbytes} is 4, then 
 the worst case is that the bug can only be triggered after all 
 $256^4=4294967296$ states are scheduled.
 
-There are different approaches for handling state explosion caused by 
+There are different approaches for handling path explosion caused by 
 symbolic pointers. For example, in the \textbf{full symbolic memory model}, 
 each possible value of symbolic pointer will fork a corresponding state 
 \cite{song2008bitblaze, thakur2010directed, brumley2011bap, trtik2014symbolic}.
 In contrast, the \textit{address concretization} strategy will concretize 
 the pointer to a specific address \cite{godefroid2005dart, burnim2008heuristics}. 
-Obviously, the full symbolic memory model may cause state explosion 
+Obviously, the full symbolic memory model may cause path explosion 
 (as mentioned before) and the address concretization may lose some 
 interesting paths. To mitigate the scalability problems of full symbolic 
 memory model and the loss of interesting paths of address concretization, 
@@ -89,7 +89,7 @@ In this case lazy forking will fork a new pending state and
 add the soft constraint $\texttt{buf[i]}\neq\texttt{`A'}$ to 
 it. Meanwhile, the path constraint of the original state will 
 be appended with the hard constraint $\texttt{buf[i]}=\texttt{`A'}$.
-By doing this, the ``state explosion'' problem is postponed to a later moment.
+By doing this, the ``path explosion'' problem is postponed to a later moment.
 
 However, the hard constraint may reduce the suffix feasible paths 
 to a very small group. For example, suppose the address of a symbolic 
@@ -104,7 +104,7 @@ to line 26 will be infeasible because the hard constraint limits
 the value of \texttt{buf[i]} ($i\in[0,1,2,3]$) to `\texttt{A}'. 
 And the crash can only be triggered after enumerating all possible 
 values for \texttt{buf[i]} ($i\in[0,1,2,3]$) in the worst case.
-So even though lazy forking can ease the state explosion problem, 
+So even though lazy forking can ease the path explosion problem, 
 it may still need to take longer time to trigger interesting paths. 
 This will result in performance loss, because the symbolic 
 execution engine will hold up the fuzzer. 
@@ -308,14 +308,14 @@ can keep the execution consistency when $^\neg B_u$ is not dead code.
 
 \subsection{Optimization for Symbolic Loop}
 Symbolic loop, whose loop control variable depends on symbolic data, 
-is another common cause of state explosion since its loop times may 
+is another common cause of path explosion since its loop times may 
 range from 0 to infinite theoretically. 
-Even though the hybrid testing method can ease state explosion, the 
+Even though the hybrid testing method can ease path explosion, the 
 states forked from a symbolic loop will quickly force the number of 
 states to increase to the budget's upper bound. 
 
 \lstinputlisting[label={RE-SLB}, language=C,style=c,caption={A motivating 
-	example to demonstrate state explosion raised by symbolic loops.}]
+	example to demonstrate path explosion raised by symbolic loops.}]
 {codes/example-SLB.c} 
 
 The code snippet in Listing~\ref{RE-SLB} demonstrates this problem. 
@@ -328,7 +328,7 @@ raw data from the \texttt{packet} at line 4.
  the fuzzer and the \texttt{length} after line 4 is \texttt{0xAA}. 
  Since the data of \texttt{packet} is marked as symbolic, the loop 
  from line 6 to 10 (whose loop variable \texttt{length} is symbolic) 
- will result in state explosion.
+ will result in path explosion.
  Because the possible value of \texttt{length} will be in the 
  range of [0, $2^{32}-1$], $2^{32}$ states will be forked from 
  line 6 in the worst case. 
@@ -338,7 +338,7 @@ to any new code coverage but only bring performance overhead.
 It is therefore important to also handle symbolic loops. 
 
 A \textit{boundary state prioritization} method has been proposed 
-to ease the state explosion problem due to symbolic loops.
+to ease the path explosion problem due to symbolic loops.
 The key idea of this prioritization is to defer the analysis of 
 uninteresting states based on the likelihood of a security vulnerability \cite{cab-fuzz}. 
 Specifically, it focuses only on three types of states for a symbolic 
@@ -377,7 +377,7 @@ this uncovered bucket will be removed from the uncovered loop buckets
 to avoid generating multiple test cases (line 7$\sim$12). After 
 generating test cases for all the uncovered buckets, the loop will 
 be prohibited from being executed for more times. This can make sure 
-that all the loop buckets will be covered without causing state explosion.
+that all the loop buckets will be covered without causing path explosion.
 
 \begin{algorithm}
   \LinesNumbered

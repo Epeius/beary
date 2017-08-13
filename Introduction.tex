@@ -25,7 +25,7 @@ of a 32-bit integer). When a symbolic value reaches a branch condition,
 the symbolic execution engine invokes a constraint solver in order to
 compute the exact value that would drive the program down the desired
 path. Unfortunately, pure symbolic execution often results in an
-exponential path explosion that bottlenecks the constraint solver.
+exponential number of paths that bottlenecks the constraint solver.
 
 Recent work aims to combine the advantages of symbolic execution and
 fuzz testing. In this hybrid approach~\cite{godefroid2012sage,
@@ -71,7 +71,7 @@ to run time information like path and memory coverage.
 %\emph{Symbolic Path Finder (SPF)} and \emph{Seacher}. The \emph{SPF}
 %component is leveraged to help the fuzzer dive into deeper code areas
 %that are guarded by complex path constraints. Techniques to handle the
-%\textit{state explosion} problem raised by symbolic pointers and loops
+%\textit{path explosion} problem raised by symbolic pointers and loops
 %are implemented inside of \emph{SPF}. The \emph{Searcher} is designed
 %to select the most promising seed file from the seed queue based on the
 %distance measurement. By doing this, the fuzzer will reach previously
