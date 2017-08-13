@@ -326,14 +326,13 @@ raw data from the \texttt{packet} at line 4.
  (i.e., \texttt{0xFF}) through a loop structure. 
  Suppose we have a concrete test case from the seed queue of 
  the fuzzer and the \texttt{length} after line 4 is \texttt{0xAA}. 
- Since the data of \texttt{packet} is marked as symbolic, the loop 
- from line 6 to 10 (whose loop variable \texttt{length} is symbolic) 
+ The symbolic loop 
+ from line 6 to 10 (\texttt{length} is symbolic) 
  will result in path explosion.
- Because the possible value of \texttt{length} will be in the 
+ Because the possible value of \texttt{length} is in the 
  range of [0, $2^{32}-1$], $2^{32}$ states will be forked from 
  line 6 in the worst case. 
- 
-Most of the forked states from line 5 will not contribute 
+Most of the forked states from line 6 may not contribute 
 to any new code coverage but only bring performance overhead.
 It is therefore important to also handle symbolic loops. 
 
