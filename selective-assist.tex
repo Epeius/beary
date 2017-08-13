@@ -64,11 +64,9 @@ The \textit{lazy forking} strategy in S2E was proposed to avoid
 maintaining expensive symbolic pointers and ease the large number 
 of states by forking \textit{pending states} in concolic 
 execution \cite{chipounov2011s2e}. 
-
 Consider a memory dereference instruction $I\in Inst$ in program $P$, 
 suppose $I$ tries to access memory indexed by a symbolic expression 
 $e_{addr}$. And the concrete value of $e_{addr}$ is $M(e_{addr})$.
-
 Lazy forking treats such instruction $I$ as a conditional instruction 
 and forks new states for $I$. It first evaluates the concrete value 
 from concrete memory as $M(e_{addr})$, then it constructs an 
@@ -98,7 +96,6 @@ where $v_1, v_2,\cdots, v_n\in Var$ are variables of program $P$.
 Then expression $condition:= EQ(e_{addr}, M(e_{addr}))$ will limit 
 the current execution path only feasible when ($v_1, v_2,\cdots, v_n$) 
 equals to ($M(v_1), M(v_2),\cdots, M(v_n)$). 
-
 Take the sample code in Listing~\ref{RE-LCSP}. The execution path 
 to line 26 will be infeasible because the hard constraint limits 
 the value of \texttt{buf[i]} ($i\in[0,1,2,3]$) to `\texttt{A}'. 
@@ -108,6 +105,7 @@ So even though lazy forking can ease the path explosion problem,
 it may still need to take longer time to trigger interesting paths. 
 This will result in performance loss, because the symbolic 
 execution engine will hold up the fuzzer. 
+
 To mitigate this problem, we introduce a novel method 
 \emph{lazy concretization of symbolic pointer} (LCSP) 
 which is built on top of lazy forking. The detailed algorithm 
@@ -351,7 +349,6 @@ Windows Server 2008 \cite{cab-fuzz}.
 We extend this boundary state prioritization method by integrating it 
 with the \emph{Loop Bucket} mechanism employed in AFL \cite{online:afl} 
 to achieve better performance on finding vulnerabilities.
- 
 AFL utilizes \emph{Loop Bucket} to avoid collecting too many test cases 
 which only affect the loop times into the seed queue \cite{online:afl}. 
 It groups the loop times into 8 different buckets, i.e., 

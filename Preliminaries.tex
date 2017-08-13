@@ -16,9 +16,11 @@ Consider a program $P$ which consists of a set of program variables
 $Var$ and a set of instructions $Inst$. 
 An \textbf{\textit{execution path}} is a serial of instructions, such as 
 $I_0\rightarrow I_1 \rightarrow \cdots\rightarrow I_n$, where $I_i\in Inst$.
-Unlike execution path, which only focuses on instructions, a 
-\textbf{\textit{program state}} also contains the value of each variable. 
-So multiple states can be mapped to the same execution path. 
+Unlike execution path, which focuses on instructions, a 
+\textbf{\textit{program state}} concentrates the value of each variable. 
+Since the bits of register and memory are bounded, the number of program
+state can be enumerated. However, the total number of execution path 
+may be infinite, which is also known as ``path explosion'' problem.
 
 Dynamic symbolic execution
 maintains a \textbf{\textit{symbolic state}} $s=<I,M,S,pc>$, where 
@@ -26,9 +28,12 @@ $I\in Inst$ denotes the next instruction to be executed,
 $M$ is the concrete memory store which maps $Var$ to concrete data, 
 $S$ is the symbolic memory store which maps $Var$ to symbolic expressions, 
 and $pc$ is the symbolic path constraint which is a first order 
-quantifier free formula over symbolic expressions. Since each symbolic state can be individually mapped to an execution path, we can use \textit{symbolic state} to equivalently represent an execution path.
-In the following sections of this paper, all \textit{states} denote the \textit{symbolic state} unless explicitly stated. And ``path explosion'' 
-can also be expressed as ``state explosion''.
+quantifier free formula over symbolic expressions. Since each symbolic state 
+can be individually mapped to an execution path, we can use \textit{symbolic state} 
+to equivalently represent an execution path.
+In the following sections of this paper, all \textit{states} 
+denote the \textit{symbolic state} unless explicitly stated. 
+And the ``path explosion'' problem can also be expressed as ``state explosion''.
 
 Under dynamic symbolic execution, program $P$ operates on both concrete
 memory $M$ and symbolic memory $S$ by executing each instruction $I\in
