@@ -57,16 +57,17 @@ improve the lazy concretization of symbolic pointers presented
 in~\cite{chipounov2011s2e}. Second, we enhance the AFL's loop bucketing
 technique~\cite{online:afl} in order to avoid getting stuck in loops
 that have a symbolic iteration counter. Third, in order to address the
-large size if the seed queue, we propose a distance-based seed
+large size of the seed queue, we propose a distance-based seed
 selection algorithm in order to improve coverage when testing time is
 limited. Each seed in the queue is weighted and prioritized according
 to run time information like path and memory coverage.
 
-Our experiments show that the \prototype we built triggers more bugs
-than other state-of-the-art vulnerability detection tools. We
-benchmarked \prototype on (1) a sample program that contains 9
+We benchmarked \prototype on (1) a sample program that contains 9
 different types of representative bugs, (2) the LAVA benchmark suite
-\cite{dolan2016lava}, and (3) a set of UNIX programs. Our approach can
+\cite{dolan2016lava}, and (3) a set of UNIX programs. 
+The experiments show that \prototype triggers more bugs
+than other state-of-the-art vulnerability detection tools. 
+The evaluation results on several real-world programs show that our approach can
 discover 43\% more unique paths on average than traditional random fuzz
 testing.
 
@@ -78,5 +79,5 @@ and loops. Section~\ref{sec:seed selection} presents the distance-based
 seed selection algorithm. Section~\ref{sec:evaluate} describes the
 implementation of \prototype and the evaluation results.
 Section~\ref{sec:discussion} discusses the limitations of our work and
-possible improvements. Finally, Section~\ref{sec:related} reviews
+possible further research topics. Finally, Section~\ref{sec:related} reviews
 related work and Section~\ref{sec:conclusion} concludes the paper.
