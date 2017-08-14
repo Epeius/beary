@@ -7,12 +7,12 @@ the QEMU virtual machine \cite{bellard2005qemu}, the KLEE symbolic
 execution engine \cite{cadar2008klee} and the LLVM 
 toolchains \cite{lattner2004llvm}.
 
-We made minor changes to AFL by implementing the distance based seed 
-selection method. For S2E, we implemented three new plugins, namely 
-\textit{BitmapSearcher}, \textit{LCSPhandler}, and \textit{SLBhandler}. 
-The \textit{BitmapSearcher} is used to share internal information with 
-AFL to generate test cases for the uncovered branches. The \textit{LCSPhandler} 
-implements the LCSP algorithm to cover branches where state forking 
-failures occur to improve the coverage. The \textit{SLBhandler} focuses 
-on symbolic loops and leverages SLB method to only generate test cases 
-for specific loop times according to the loop buckets. 
+Our implementation consists of two main components, namely
+\emph{Symbolic Path Finder (SPF)} and \emph{Seacher}. The \emph{SPF}
+component is leveraged to help the fuzzer dive into deeper code areas
+that are guarded by complex path constraints. Techniques to handle the
+\textit{path explosion} problem raised by symbolic pointers and loops
+are implemented inside of \emph{SPF}. The \emph{Searcher} is designed
+to select the most promising seed file from the seed queue based on the
+distance measurement. By doing this, the fuzzer will reach previously
+untouched code areas as soon as possible in a given time budget.

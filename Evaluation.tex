@@ -364,8 +364,8 @@ our selection strategy in the following evaluation section.
 \subsection{Improvement Detail for Each Component (RQ3)} \label{sec:RQ3}
 In order to evaluate the contribution of each component on finding 
 unique paths, we conducted four experiments (i.e., vanilla AFL fuzz testing, 
-symbolic execution assisted hybrid testing (\textit{SEHT}), SEHT with SPF, 
-SEHT with SPF\&Searcher) and compared their results in 24 hours.
+symbolic execution assisted hybrid testing (\textit{SEHT}), SEHT with \textit{SPF}, 
+SEHT with \textit{SPF\&Searcher}) and compared their results in 24 hours.
 
 In our experiments, since Driller \cite{stephens2016driller} does not support 
 real-world binary programs very well now (many library functions and system 
@@ -380,20 +380,20 @@ vanilla fuzz testing, symbolic execution assisted hybrid testing can
 discover 11.88\% more unique paths in average. For example, this 
 improvement reaches the highest figure of 42.79\% for \texttt{readelf}. 
 However, the performance gain is lower than 20\% for the other 7 programs. 
-Specifically, \textit{SEHT} triggered only 1.32\% more unique paths 
+Specifically, SEHT triggered only 1.32\% more unique paths 
 than vanilla fuzz testing for \texttt{gif2png}. This is because the 
 symbolic execution engine does not support to handle float number 
 operation. After employing \textit{SPF} which handles symbolic pointers 
-and symbolic loops, 7.22\% more unique paths touched by \textit{SEHT with SPF} 
-than \textit{SEHT} in average. We can see from this figure that 
-the performance of \textit{SEHT} is highly improved by \textit{SPF} 
+and symbolic loops, 7.22\% more unique paths touched by SEHT with \textit{SPF}
+than SEHT in average. We can see from this figure that 
+the performance of SEHT is highly improved by \textit{SPF} 
 for \texttt{readelf} and \texttt{objdump} (18.02\% and 22.62\% respectively).
  
 This improvement can be continually augmented by cooperating with CS 
-searcher (\textit{SEHT with SPF and CS Searcher}). For example, the number 
-of unique paths discovered by \textit{SEHT} is increased by 
-49.57\% for \texttt{objdump}. In average, the performance of \textit{SEHT} 
-is improved by 24.44\% after introducing SPF and CS searcher. From an 
+searcher (SEHT with \textit{SPF} and CS \textit{Searcher}). For example, the number 
+of unique paths discovered by SEHT is increased by 
+49.57\% for \texttt{objdump}. In average, the performance of SEHT 
+is improved by 24.44\% after introducing \textit{SPF} and CS \textit{Searcher}. From an 
 overall viewpoint, \prototype can discover 43.49\% more unique paths 
 than vanilla AFL fuzz testing for our benchmark. This improvement is 
 because that seeds file with longest distance from already-explored 
