@@ -322,9 +322,9 @@ raw data from the \texttt{packet} at line 4.
  Then from Line 6 to 10, it investigates each bytes in the raw data 
  to determine whether there exists the ending descriptor 
  (i.e., \texttt{0xFF}) through a loop structure. 
- Suppose we have a concrete test case from the seed queue of 
- the fuzzer and the \texttt{length} after line 4 is \texttt{0xAA}. 
- The symbolic loop 
+ Suppose we have a test case from the seed queue of 
+ the fuzzer and its \texttt{length} is \texttt{0xAA}, 
+ then the symbolic loop 
  from line 6 to 10 (\texttt{length} is symbolic) 
  will result in path explosion.
  Because the possible value of \texttt{length} is in the 
