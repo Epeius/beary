@@ -17,13 +17,15 @@ $Var$ and a set of instructions $Inst$.
 An \textbf{\textit{execution path}} is a serial of instructions, such as 
 $I_0\rightarrow I_1 \rightarrow \cdots\rightarrow I_n$, where $I_i\in Inst$.
 Unlike execution path, which focuses on instructions, a 
-\textbf{\textit{program state}} concentrates the value of each variable. 
+\textbf{\textit{program state}} holds the value of each variable (a variable 
+can be represented by either register or memory).
 Since the bits of register and memory are bounded, the number of program
 state can be enumerated. However, the total number of execution path 
 may be infinite, which is also known as ``path explosion'' problem.
 
 Dynamic symbolic execution
-maintains a \textbf{\textit{symbolic state}} $s=<I,M,S,pc>$, where 
+maintains a \textbf{\textit{symbolic state}} 
+$\mathcal{S}=\langle I,M,S,pc\rangle$, where 
 $I\in Inst$ denotes the next instruction to be executed, 
 $M$ is the concrete memory store which maps $Var$ to concrete data, 
 $S$ is the symbolic memory store which maps $Var$ to symbolic expressions, 
@@ -122,10 +124,12 @@ hybrid testing method, the verification of \texttt{header->checksum} at
 line 5 can be solved by symbolic execution engine and generate a new
 test case for further fuzzing.
 
-However, function \texttt{path\_explosion} prevents symbolic execution
-from solving the conditional instruction as line 9. This is because in
-hybrid testing, the total number of symbolic state is limited by an
-upper bound budget to avoid serious memory overhead
-\cite{stephens2016driller}. As \texttt{path\_explosion} saturates the
-budget, no more forking will happen.  We will discuss our mitigation
+However, function \texttt{path\_explosion} makes it hard to solve the 
+conditional instruction at line 9. For example, when using BFS exploration 
+strategy, this function will quickly saturate the symbolic state's number 
+budget that used to avoid memory overhead \cite{stephens2016driller}; DFS 
+exploration works better than BFS in this example, but it may degrade to 
+exhaustive testing in some cases (e.g., when \texttt{path\_explosion} deals
+\texttt{flag} as a symbolic pointer). 
+We will discuss our mitigation
 for this problem in Section~\ref{sec:ease PE}.
