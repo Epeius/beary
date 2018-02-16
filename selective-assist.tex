@@ -124,7 +124,8 @@ float=tp]{codes/real-eaxmple-LSP.c}
   \KwOut{Testcase $t_{lsp}$ if success.}
   $C_F = getFailedCondition()$\;
   $offs = S.getInputOffset(C_F)$\;
-  \If{$S_P.find(offs) == S_P.end()$}
+  %\If{$S_P.find(offs) == S_P.end()$}
+  \If{$offs$ \textbf{not in} $S_p$}
   {
     return $null$\;
   }
@@ -178,12 +179,12 @@ Then path constraint for each states is shown in Table~\ref{table:path-condition
 {\begin{tabular*}{20pc}{@{\extracolsep{\fill}}lccccc@{}}\toprule
 State  & buf[0] & buf[1] & buf[2] & buf[3] & buf[4]\\ 
 \midrule
-		$S_0$  &  $=0x41$ & $=0x41$ & $=0x41$ & $=0x41$ & $=0x41$ \\
-		$P_0$  &  $\neq0x41$ & N/A & N/A & N/A & N/A \\
-		$P_1$  &  $=0x41$ & $\neq0x41$ & N/A & N/A & N/A\\
-		$P_2$  &  $=0x41$ & $=0x41$ & $\neq0x41$ & N/A & N/A \\
-		$P_3$  &  $=0x41$ & $=0x41$ & $=0x41$ & $\neq0x41$ & N/A \\
-		$P_4$  &  $=0x41$ & $=0x41$ & $=0x41$ & $=0x41$ & $\neq0x41$ \\
+		$S_0$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' \\
+		$P_0$  &  $\neq$ `A' & N/A & N/A & N/A & N/A \\
+		$P_1$  &  $=$ `A' & $\neq$ `A' & N/A & N/A & N/A\\
+		$P_2$  &  $=$ `A' & $=$ `A' & $\neq$ `A' & N/A & N/A \\
+		$P_3$  &  $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' & N/A \\
+		$P_4$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' \\
 \botrule
 \end{tabular*}}{}
 \end{table}
