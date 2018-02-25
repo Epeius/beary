@@ -34,31 +34,64 @@ processing.
 Function \texttt{looks\_ascii} tries to determine whether each character 
 of the symbolic input data appears in plain ASCII text, and returns 
 immediately once a non-plain ASCII text character appears. 
-Since \texttt{buf[i]} has 256 possible values (\textit{unsigned char}), 
-then the symbolic engine will fork state for each possible value (i.e., 
-full symbolic memory model).This will cause the code at Line 18 to fork 
-$256^{nbytes}$ states, causing path explosion. The bug nested at line 26 
-will only be triggered when the states that satisfy the path condition 
-are scheduled for execution, which may never practically occur in the 
-face of path explosion. For example, suppose \texttt{nbytes} is 4, then 
-the worst case is that the bug can only be triggered after all 
-$256^4=4294967296$ states are scheduled.
+The symbolic execution engine faces the symbolic pointer problem when executing 
+the code at line 18 because \texttt{buf[i]} is from the symbolic input data. 
+The memory range of \texttt{text\_chars[buf[i]]} spans from \texttt{\&text\_chars} 
+to \texttt{\&text\_chars+255}. Since the binary executable loses the 
+type information, the symbolic execution engine may need to explore all 256 possible
+values for each \texttt{buf[i]} at the worst case. Meanwhile, the loop from line
+17 to line 22 makes the trigger of the bug at line 26 even harder since more
+states will be forked when \texttt{nbytes} is a larger one.
+% Inaccurate expression for FSMM.
+%Since \texttt{buf[i]} has 256 possible values (\textit{unsigned char}), 
+%then the symbolic engine will fork state for each possible value (i.e., 
+%fully symbolic memory model).
+%This will cause the code at Line 18 to fork 
+%$256^{nbytes}$ states, causing path explosion. The bug nested at line 26 
+%will only be triggered when the states that satisfy the path condition 
+%are scheduled for execution, which may never practically occur in the 
+%face of path explosion. For example, suppose \texttt{nbytes} is 4, then 
+%the worst case is that the bug can only be triggered after all 
+%$256^4=4294967296$ states are scheduled.
 
-There are different approaches for handling path explosion caused by 
-symbolic pointers. For example, in the \textbf{full symbolic memory model}, 
-each possible value of symbolic pointer will fork a corresponding state 
+There are different approaches for handling path explosion caused by
+symbolic pointers. For example, treating memory address as \textbf{fully symbolic} 
+enables the executor to reason about all possible values for symbolic pointer
 \cite{song2008bitblaze, thakur2010directed, brumley2011bap, trtik2014symbolic}.
-In contrast, the \textit{address concretization} strategy will concretize 
-the pointer to a specific address \cite{godefroid2005dart, burnim2008heuristics}. 
-Obviously, the full symbolic memory model may cause path explosion 
-(as mentioned before) and the address concretization may lose some 
-interesting paths. To mitigate the scalability problems of full symbolic 
-memory model and the loss of interesting paths of address concretization, 
-a \textbf{partial symbolic memory model} has been proposed \cite{cha2012unleashing, avgerinos2014exploiting, Shoshitaishvili_firmalice-automatic}. The partial 
-symbolic memory model tries to concretize all symbolic pointer write 
-operation and treats all symbolic pointer read operation using a full 
-symbolic memory model. However, because the instruction at line 18 is a 
-read operation, the partial symbolic memory model will still fork $256^{nbytes}$ states.
+This can be achieved by either forking states or employing nested 
+\textit{if-then-else} formulas which encode all possible values. 
+However, since a symbolic address may pointer to any memory cell, fully symbolic
+memory model fails to scale for real-world binary software. 
+Some researches leverage the \textit{theories of arrays} to make fully symbolic 
+memory model scalable \cite{cadar2006exe}\cite{cadar2008klee}. 
+For example, KLEE \cite{cadar2008klee} forks states for values that reference 
+different objects, and the \textit{theories of arrays} is leveraged within the same object.
+However, since our target is to analyze binary executable whose object size of data structure is 
+unavailable, the number of objects increases because each possible value may reference to a 
+different object.
+In contrast to reason about all possible values, a \textbf{partial symbolic} memory model has been proposed \cite{cha2012unleashing, avgerinos2014exploiting, Shoshitaishvili_firmalice-automatic}.  
+The partial symbolic memory model tries to concretize all symbolic pointer write 
+operation and treats symbolic pointer read operation using a fully 
+symbolic memory model when contiguous interval of possible values is small enough.
+However, if the possible values spans a large area, partial symbolic memory model
+still needs to concretize the symbolic pointer which may lose some soundness paths.
+
+%% Inaccurate description for fully and partial symbolic memory model.
+%There are different approaches for handling path explosion caused by 
+%symbolic pointers. For example, in the \textbf{fully symbolic memory model}, 
+%each possible value of symbolic pointer will fork a corresponding state 
+%\cite{song2008bitblaze, thakur2010directed, brumley2011bap, trtik2014symbolic}.
+%In contrast, the \textit{address concretization} strategy will concretize 
+%the pointer to a specific address \cite{godefroid2005dart, burnim2008heuristics}. 
+%Obviously, the fully symbolic memory model may cause path explosion 
+%(as mentioned before) and the address concretization may lose some 
+%interesting paths. To mitigate the scalability problems of fully symbolic 
+%memory model and the loss of interesting paths of address concretization, 
+%a \textbf{partial symbolic memory model} has been proposed \cite{cha2012unleashing, avgerinos2014exploiting, Shoshitaishvili_firmalice-automatic}. The partial 
+%symbolic memory model tries to concretize all symbolic pointer write 
+%operation and treats all symbolic pointer read operation using a fully 
+%symbolic memory model. However, because the instruction at line 18 is a 
+%read operation, the partial symbolic memory model will still fork $256^{nbytes}$ states.
 
 The \textit{lazy forking} strategy in S2E was proposed to avoid 
 maintaining expensive symbolic pointers and ease the large number 
