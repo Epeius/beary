@@ -93,17 +93,18 @@ still needs to concretize the symbolic pointer which may lose some soundness pat
 %symbolic memory model. However, because the instruction at line 18 is a 
 %read operation, the partial symbolic memory model will still fork $256^{nbytes}$ states.
 
-The \textit{lazy forking} strategy in S2E was proposed to avoid 
+The \textit{lazy forking} strategy leveraged in S2E was proposed to avoid 
 maintaining expensive symbolic pointers and ease the large number 
 of states by forking \textit{pending states} in concolic 
 execution \cite{chipounov2011s2e}. 
 Consider a memory dereference instruction $I\in Inst$ in program $P$, 
 suppose $I$ tries to access memory indexed by a symbolic expression 
-$e_{addr}$. And the concrete value of $e_{addr}$ is $M(e_{addr})$.
+$e_{addr}$.
 Lazy forking treats such instruction $I$ as a conditional instruction 
 and forks new states for $I$. It first evaluates the concrete value 
-from concrete memory as $M(e_{addr})$, then it constructs an 
-expression $condition:= EQ(e_{addr}, M(e_{addr}))$. Then it forks a 
+as $c_{addr}$, then it constructs an equal
+expression $condition:= EQ(e_{addr}, c_{addr})$ 
+which points $e_{addr}$ to this concrete value. Then it forks a 
 new state $s_p=fork(s, ^\neg condition)$ which is labeled as a 
 ``pending state''. After that, each possible value of $e_{addr}$ 
 will be exercised by systematically repeating this process. Even 
@@ -126,14 +127,16 @@ However, the hard constraint may reduce the suffix feasible paths
 to a very small group. For example, suppose the address of a symbolic 
 pointer can be expressed as $e_{addr}=f(v_1, v_2,\cdots, v_n)$, 
 where $v_1, v_2,\cdots, v_n\in Var$ are variables of program $P$. 
-Then expression $condition:= EQ(e_{addr}, M(e_{addr}))$ will limit 
+Then expression $condition:= EQ(e_{addr}, c_{addr})$ will limit 
 the current execution path only feasible when ($v_1, v_2,\cdots, v_n$) 
-equals to ($M(v_1), M(v_2),\cdots, M(v_n)$). 
+equals to ($c_1, c_2,\cdots, c_n$), where $c_i$ are the 
+corresponding concrete values. 
 Take the sample code in Listing~\ref{RE-LCSP}. The execution path 
 to line 26 will be infeasible because the hard constraint limits 
 the value of \texttt{buf[i]} ($i\in[0,1,2,3]$) to `\texttt{A}'. 
 And the crash can only be triggered after enumerating all possible 
-values for \texttt{buf[i]} ($i\in[0,1,2,3]$) in the worst case.
+values for \texttt{buf[i]} ($i\in[0,1,2,3]$) in the worst case since
+lazy forking still belongs to DFS state exploration strategy.
 So even though lazy forking can ease the path explosion problem, 
 it may still need to take longer time to trigger interesting paths. 
 This will result in performance loss, because the symbolic 
