@@ -152,53 +152,129 @@ of LCSP is shown in Algorithm~\ref{LCSP}.
 	motivating code derived from \texttt{file} in GNU Coreutils that contains symbolic pointer dereference at line 18.}, 
 float=tp]{codes/real-eaxmple-LSP.c} 
 
+Whenever the execution engine touches a symbolic pointer $e_{addr}$, it obtains 
+the range of all possible values $\mathcal{R}$ by invoking function \texttt{getRange} 
+in constraint solver. Then memory values $v$ within the range are dissolved
+into buckets $\mathcal{B}=\langle v, addr\rangle$, where $v$ is the memory value; $addr$
+is the set of memory cell's address whose memory value is $v$. 
+After this, we reuse S2E's lazy forking method to pickup 
+the buckets that contains the concrete value of this symbolic pointer.
+For example, when executing the code at line 18 in Listing~\ref{RE-LCSP}, the range of 
+the symbolic pointer is $\mathcal{R}=\texttt{\&text\_chars}+\{0, 1,\cdots, 255\}$.
+By scanning the memory cells within $\mathcal{R}$, we can build 4 buckets, i.e., 
+
+$\mathcal{B}_0=\{v=0| addr=[0,1,2,3,4,5,6,11,14,15,\cdots]\}$
+
+$\mathcal{B}_1=\{v=1| addr=[7,8,9,10,12,13,\cdots]\}$
+
+$\mathcal{B}_2=\{v=2| addr=[160,161\cdots, 253,254,255]\}$
+
+$\mathcal{B}_3=\{v=3| addr=[128,129,130,\cdots,159]\}$
+
+Since $e_{addr}$'s concrete value belongs to $\mathcal{B}_1$, we then
+introduce a new symbolic variable $v_p$ into the engine and update current path constraint by adding expanded hard constraint $condition$ to it. 
+$condition$ is descried as $P_\mathcal{B}\cap P_v\cap P_p$, where
+
+$P_\mathcal{B}=\{\bigcup\limits_{i=0}^{Len_{addr}-1}e_{addr}=addr_i\}$;
+
+$P_v=\{v_p=1\}$; 
+
+$P_p=\{e_{addr}=\&\texttt{text\_chars}+0x41\}$.
+
+During the following execution, all path conditions that related to the newly
+introduced symbolic variable $v_p$ will be collected as pointer dereference constraint
+$C_{pd}$.
+This constraint is used to keep execution consistency.
+
 \begin{algorithm}
  \LinesNumbered
   \caption{Lazy concretization of symbolic pointer}
   \label{LCSP}
-  \KwIn{Current state $S$, pending states $S_P$, hard constraint $C_H$.}
+  \KwIn{Current state $S$, pending states $S_P$, hard constraint $C_H$, 
+  	    pointer dereference constraint $C_{pd}$.}
   \KwOut{Testcase $t_{lsp}$ if success.}
   $C_F = getFailedCondition()$\;
-  $offs = S.getInputOffset(C_F)$\;
-  %\If{$S_P.find(offs) == S_P.end()$}
-  \If{$offs$ \textbf{not in} $S_p$}
+  % ignore cases that unrelated to symbolic pointer
+  \If{$C_F$ \textbf{is not result from symbolic pointer}}
   {
-    return $null$\;
+  	return $null$\;
   }
-  $Conditions = S.getConditions().strip(C_H)$\;
-  \ForEach{$s_p$ in $S_P.find(offs)$}
+  $offs = S.getInputOffset(C_F)$\;
+  
+  % Collect all possible bucket's addr to Solutions
+  $extraCond\leftarrow True$\;
+  \ForEach{$s_p$ in $S_P$}
   {
-    $s_{tmp} = s_p.clone()$\;
-    $s_{tmp}.addConstraint(Conditions)$\;
-    $s_{tmp}.addConstraint(C_F)$\;
-    $(success, t_lsp) = s_{tmp}.generateTestcase()$\;
-    \eIf{$success$}
-    {
-      return $t_{lsp}$;
-    } {
-      continue;
-    }
+  	$off_{fork} = s_p$.getInputOffset($s_p$.forkCondition)\;
+  	\If{$off_{fork}$ not in $offs$}
+  	{continue\;}
+  	$\mathcal{B}=s_p$.buckets\;
+  	$e_{addr} = s_p$.getForkAddr()\;
+  	% find all satisfied buckets
+  	$\mathcal{B}_{sat}=s_p$.getSATBuckets($C_{pd}$, $\mathcal{B}$)\;
+  	
+  	% sieve real solutions out
+  	$curExtraCond\leftarrow False$\;
+  	\ForEach{$addr$ in $\mathcal{B}_{sat}$.addr}
+  	{
+      $s_{tmp} = S$.clone()\;
+      $s_{tmp}$.getConditions().strip($C_H$)\;
+      $s_{tmp}$.addConstraint($C_F$)\;
+      $C_{new}\leftarrow \{e_{addr}=addr\}$\;
+      $success = s_{tmp}$.evaluate($C_{new}$)\;
+      \If{success}
+      {$curExtraCond\leftarrow curExtraCond\cup C_{new}$\;}
+  	}
+  	$extraCond\leftarrow extraCond\cap curExtraCond$\;
+  }
+  
+  $s_{tmp} = S$.clone()\;
+  $s_{tmp}$.getConditions().strip($C_H$)\;
+  $s_{tmp}$.getConditions().strip($C_{pd}$)\;
+  $s_{tmp}$.addConstraint($extraCond$)\;
+  
+  $(success, t_{lsp}) = s_{tmp}$.generateTestcase()\;
+  \If{$success$}
+  {
+    return $t_{lsp}$;
   }
   return $null$\;
 \end{algorithm}
 
 When performing lazy forking, all the states whose path constraints 
-contain the soft constraints will be collected into \emph{Pending States}. 
+contain the soft constraints will be collected into \emph{Pending States}
+as well as the buckets. 
 These pending states are grouped by the program variables (e.g., each 
 byte in an input file) that affect the corresponding soft constraint. 
+They are also ordered along with the execution trace.
 Then when the dynamic symbolic execution engine detects an infeasible 
-branch due to hard constraints, the branch condition $C_F$ will be 
-investigated to extract the program variables $offs$ (line 1\&2). 
-LCSP ignores the cases when there are no corresponding pending 
-states for $offs$ (line 3$\sim$5). 
-If state $S$ has pending states, all the related conditions in path 
-constraint of $S$ except for the hard constraint will be added to the 
-related pending states (line 9).
-After that, in order to generate the test case that satisfies the failed 
-condition, the branch condition $C_F$ of infeasible branch will be also 
-added to the pending states (line 10).
+branch due to hard constraints from symbolic pointer (line 3$\sim$5), 
+the branch condition $C_F$ will be 
+investigated to extract the program variables $offs$ (line 5).
+
+
+
+Since we introduce new symbolic variable when dereferencing a symbolic pointer,
+we need to make sure all conditions in $C_{pd}$ are satisfied so that the generated
+test case can keep execution consistency.
+Line 14 collects all satisfied buckets into $\mathcal{B}_{sat}$. The collect procedure
+is light-weight since \texttt{getSATBuckets} only needs to evaluate $C_{pd}$
+under each bucket's key (i.e.,$v$).
+For each satisfied bucket, real solutions for current $e_{addr}$ are sieved out 
+(line 16$\sim$25). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
+(line 20\&21). All $C_{new}$ evaluated as True will be collected together (line 22
+$\sim$24). The $\cup$ in line 23 compact consecutive $addr$s into a range expression.
+For example, $\{e_addr=4\}$, $\{e_addr=5\}$ and $\{e_addr=6\}$ will be transformed to
+$\{4<=e_addr<=6\}$.
+
+By analyzing all pending states, the final extra condition $extraCond$ is constructed
+(line 26).
+After this, we remove $C_H$ and $C_{pd}$ from a newly cloned state $s_{tmp}$
+from current state and append
+the final extra condition to it (line 29$\sim$31). 
+The reason why $C_{pd}$ is stripped is because it is already satisfied at line 14.
 After appending all related conditions, the dynamic symbolic execution 
-engine will try to generate a new test case (line 11), and once the 
+engine will try to generate a new test case (line 32), and once the 
 generation successes, the test case $t_{lsp}$ will be sent to the 
 fuzzer to find more paths.
 
@@ -206,140 +282,167 @@ For the code in Listing~\ref{RE-LCSP}, suppose \texttt{nbytes} is 5.
 Then when dynamic symbolic execution reaches line 24, there will be 
 six states in the system: one execution state $S_0$ and five pending 
 states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when 
-dereferencing \texttt{buf[$i$]} at line 18.
-Then path constraint for each states is shown in Table~\ref{table:path-conditions}.
+dereferencing \texttt{buf[$i$]} at line 18. And pointer dereference
+constraint $C_{pd}$ is $\{v_0=T\cap v_1=T\cap v_2=T\cap v_3=T\cap v_4=T\}$,
+where $v_i$ is introduced for each symbolic pointer dereference at
+line 18.
 
-\begin{table}[!b]
-\processtable{Path Constraint for each state when reaching line 24 in Listing~\ref{RE-LCSP}.
-	\label{table:path-conditions}}
-{\begin{tabular*}{20pc}{@{\extracolsep{\fill}}lccccc@{}}\toprule
-State  & buf[0] & buf[1] & buf[2] & buf[3] & buf[4]\\ 
-\midrule
-		$S_0$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' \\
-		$P_0$  &  $\neq$ `A' & N/A & N/A & N/A & N/A \\
-		$P_1$  &  $=$ `A' & $\neq$ `A' & N/A & N/A & N/A\\
-		$P_2$  &  $=$ `A' & $=$ `A' & $\neq$ `A' & N/A & N/A \\
-		$P_3$  &  $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' & N/A \\
-		$P_4$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' \\
-\botrule
-\end{tabular*}}{}
-\end{table}
+Because of the hard constraint, the four condition instructions at line 24
+is infeasible. 
+For example, for condition \texttt{ubuf[0]==`D'}, since line
+18 introduces $\texttt{buf[0]=`A'}$, condition \texttt{ubuf[0]==`D'} cannot
+be satisfied. LCSP first checks the input offset that results in this infeasible
+condition and deals all pending states related to this offset. Based on this,
+only $P_0$ is analyzed in order to break \texttt{ubuf[0]==`D'}. As mentioned before,
+there are four buckets for $P_0$, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$,
+$\mathcal{B}_3$. Then \texttt{getSATBuckets} verifies keys for all these four buckets 
+to sieve the feasible ones. In this example, $\mathcal{B}_{sat}=\{\mathcal{B}_1\}$ since
+$v_0=T$ in $C_{pd}$ must be satisfied. 
 
-The hard constraint for $S_0$ is $C_{H}\leftarrow$ \{\texttt{buf[0]$=$`A'\& buf[1]$=$`A'\&buf[2]$=$`A'\&buf[3]$=$`A'\&buf[4]$=$`A'}\}. 
-Because of $C_{H}$, the branch condition at line 24\&25 ($C_{F}\leftarrow$ \{\texttt{buf[0]$=$`D'\&buf[1]$=$`E'\&buf[2]$=$`A'\&buf[3]$=$`D'}\}) will 
-be infeasible.
-Based on \textit{LCSP}, the path conditions of $S_0$ (except for the related 
-hard conditions) will be append to each pending state to generate new test case. 
-After stripping the related hard conditions, the \textit{Conditions} at line 
-6 in Listing~\ref{LCSP} will be $\texttt{buf[4]}=\texttt{`A'}$. 
-Then \textit{Conditions} will be added to each pending state. For example, 
-the path constraint of $P_0$ after adding such conditions will be 
-\{\texttt{buf[0]$\neq$`A' \& buf[4]$=$`A' \& buf[0]$=$`D' \& buf[1]$=$`E' \& buf[2]$=$`A' \& buf[3]$=$`D'}\}. After solving this path constraint, we can successfully 
-generate a test case that satisfies the condition at line 24\&25 and 
-triggers the bug at line 26. 
-
-An interesting point in our example is that $P_1$, $P_2$, $P_3$, and 
-$P_4$ cannot successfully trigger this bug. This does not mean that 
-these states are useless. 
-For example, if the condition at line 24\&25 is 
-\{\texttt{buf[0]$=$`A' \& buf[1]$=$`B' \& buf[2]$=$`C' \& buf[3]$=$`D'}\}, 
-then $P_1$ can successfully generate a corresponding test case 
-that triggers the bug.
-
-Based on this algorithm, we can generate at least one fresh test case 
+Then from line 16 to line 25 in Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition. The final constructed extra
+condition for \texttt{ubuf[0]==`D'} in this example is $extraCond=\{\texttt{buf[0]=`D'}\}$.
+This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
+Then LCSP fixes current path condition by stripping unrelated conditions and adding
+$\{\texttt{buf[0]=`D'}\}$ to it. After this, it invokes constraint solver to 
+generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]==`D'}, the 
+generated test case is \texttt{DAAAA}. This test case will be sent to the fuzzer and the
+remained three conditions at line 24 will be solved in the same way. Thus, based on this algorithm, we can generate at least one fresh test case 
 that satisfies the branch condition whenever a branch is infeasible 
-because of lazy forking. But we still need to prove this test case 
-will steer the program to execute the same path with the original 
-state and then covers the branch that fails in the original state. 
-A quick execution consistency proof is explained as follows:
+because of lazy forking. 
 
-Let $P_A$ be the execution path of a state $A$ which contains 
-the following branches:
-\begin{center}
-$P_A:(B_0) \rightarrow (B_1) \rightarrow (B_2) \rightarrow 
-(B_3) \rightarrow (B_4) \rightarrow (B_5) \rightarrow (B_6) \rightarrow (B_u)$
-\end{center}
+%Then path constraint for each states is shown in Table~\ref{table:path-conditions}.
+%
+%\begin{table}[!b]
+%\processtable{Path Constraint for each state when reaching line 24 in Listing~\ref{RE-LCSP}.
+%	\label{table:path-conditions}}
+%{\begin{tabular*}{20pc}{@{\extracolsep{\fill}}lccccc@{}}\toprule
+%State  & buf[0] & buf[1] & buf[2] & buf[3] & buf[4]\\ 
+%\midrule
+%		$S_0$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' \\
+%		$P_0$  &  $\neq$ `A' & N/A & N/A & N/A & N/A \\
+%		$P_1$  &  $=$ `A' & $\neq$ `A' & N/A & N/A & N/A\\
+%		$P_2$  &  $=$ `A' & $=$ `A' & $\neq$ `A' & N/A & N/A \\
+%		$P_3$  &  $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' & N/A \\
+%		$P_4$  &  $=$ `A' & $=$ `A' & $=$ `A' & $=$ `A' & $\neq$ `A' \\
+%\botrule
+%\end{tabular*}}{}
+%\end{table}
+%
+%The hard constraint for $S_0$ is $C_{H}\leftarrow$ \{\texttt{buf[0]$=$`A'\& buf[1]$=$`A'\&buf[2]$=$`A'\&buf[3]$=$`A'\&buf[4]$=$`A'}\}. 
+%Because of $C_{H}$, the branch condition at line 24\&25 ($C_{F}\leftarrow$ \{\texttt{buf[0]$=$`D'\&buf[1]$=$`E'\&buf[2]$=$`A'\&buf[3]$=$`D'}\}) will 
+%be infeasible.
+%Based on \textit{LCSP}, the path conditions of $S_0$ (except for the related 
+%hard conditions) will be append to each pending state to generate new test case. 
+%After stripping the related hard conditions, the \textit{Conditions} at line 
+%6 in Listing~\ref{LCSP} will be $\texttt{buf[4]}=\texttt{`A'}$. 
+%Then \textit{Conditions} will be added to each pending state. For example, 
+%the path constraint of $P_0$ after adding such conditions will be 
+%\{\texttt{buf[0]$\neq$`A' \& buf[4]$=$`A' \& buf[0]$=$`D' \& buf[1]$=$`E' \& buf[2]$=$`A' \& buf[3]$=$`D'}\}. After solving this path constraint, we can successfully 
+%generate a test case that satisfies the condition at line 24\&25 and 
+%triggers the bug at line 26. 
+%
+%An interesting point in our example is that $P_1$, $P_2$, $P_3$, and 
+%$P_4$ cannot successfully trigger this bug. This does not mean that 
+%these states are useless. 
+%For example, if the condition at line 24\&25 is 
+%\{\texttt{buf[0]$=$`A' \& buf[1]$=$`B' \& buf[2]$=$`C' \& buf[3]$=$`D'}\}, 
+%then $P_1$ can successfully generate a corresponding test case 
+%that triggers the bug.
 
-\noindent where $B_i$ refers to the $i$-th branch, and $B_u$ 
-denotes the infeasible branch that because of the extra hard constraint.
-And its path constraint is:
-\begin{center}
-$PC_A\leftarrow \displaystyle \bigcap\limits_{i=0}^{6} CB_i \cap CB_u$
-\end{center}
-, where the $CB_i$ denotes the path condition at branch $B_i$.
 
-Assume that the hard constraint is $var=0xAB$ which is originated 
-from lazy forking from $B_1$. 
-We also assume that the branch conditions at $B_3$ and $B_5$ are 
-also affected by $var$; state $B$ is the corresponding pending state 
-forked from $B_1$, and its path constraint is:
-\begin{center}
-$PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1$
-\end{center}
-, where $^\neg CB_1$ is the soft constraint.
-
-Then, according to the \textit{LCSP} algorithm in Listing~\ref{LCSP}, 
-when state $A$ detects the infeasible branch $B_u$ because of hard 
-constrain, all the related constraints except the hard constraint 
-of state $A$ will be added to state $B$. After that, the path 
-constraint of state $B$ will be:
-
-\begin{center}
-$PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1 
-\cap (\bigcap\limits_{i=0,i \neq 1}^{6} CB_i) \cap ^\neg CB_u$
-\end{center}
-where $^\neg CB_u $ is the branch condition we want to cover 
-and $\bigcap_{i=0,i \neq 1}^{6} CB_i$ is the conditions from 
-state $A$ after stripping the hard constraint.
-
-We need to prove the following formula:
-
-\begin{center}
-$\mathbb{Z}=\{var\arrowvert PC_B(var) = True\} \neq \emptyset$
-\end{center}
-
-As there are only two branches before $B_u$ that depend on $var$, 
-the expression $PC_B$ can be simplified to:
-\begin{center}
-$PC_B\leftarrow^\neg CB_u \cap ^\neg CB_1 \cap CB_3 \cap CB_5$
-\end{center}
-
-There are two possible cases for $CB_3 \cap CB_5$:
-\begin{center}
-case1: $CB_3 \cap CB_5 = (var = 0xAB)$
-
-case2: $CB_3 \cap CB_5 \neq (var = 0xAB)$
-\end{center}
-
-Under the first case, the path to $B_u$ is only feasible when 
-$var$ equals to $0xAB$. So the edge $^\neg B_u$ can never be 
-satisfied (i.e., \emph{dead code}) because $(var = 0xAB) \subseteq CB_u$. 
-For the second case, there must be at least one feasible solution 
-for $var$ that satisfies the soft constraint $^\neg CB_1$, so 
-$^\neg CB_1 \cap \bigcap_{i=0,i \neq 1}^{6} CB_i$ can be evaluated 
-to $True$ for some specified values of $var$. This has proved that 
-there must be at least one test case under $PC_B$ that can steer 
-the program to the infeasible branch $B_u$.
-
-Similarly, for branch condition $B_u$, there are also two possible cases:
-\begin{center}
-case1: $\displaystyle ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \subseteq CB_u$
-
-case2: $\displaystyle ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \nsubseteq CB_u$
-\end{center}
-
-The first case, which can also be expressed as 
-$^\neg CB_u \cap ^\neg CB_1 \cap \bigcap_{i=0,i\neq 1}^6 CB_i = \emptyset$, 
-is the case of \emph{dead code}. And the second case can be transformed into:
-\begin{center}
-$\displaystyle ^\neg CB_u \cap ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \neq \emptyset \implies \mathbb{Z} = \{var\arrowvert PC_B(var) = True\} \neq \emptyset$
-\end{center}
-
-\noindent which means there must be at least one feasible value 
-that satisfies the false branch of $B_u$.
-
-So above all, we can draw a conclusion that our \emph{LCSP} algorithm 
-can keep the execution consistency when $^\neg B_u$ is not dead code.
+%% Remove this proof since the consistency is kept by the constraint solver.
+%But we still need to prove this test case 
+%will steer the program to execute the same path with the original 
+%state and then covers the branch that fails in the original state. 
+%A quick execution consistency proof is explained as follows:
+%
+%Let $P_A$ be the execution path of a state $A$ which contains 
+%the following branches:
+%\begin{center}
+%$P_A:(B_0) \rightarrow (B_1) \rightarrow (B_2) \rightarrow 
+%(B_3) \rightarrow (B_4) \rightarrow (B_5) \rightarrow (B_6) \rightarrow (B_u)$
+%\end{center}
+%
+%\noindent where $B_i$ refers to the $i$-th branch, and $B_u$ 
+%denotes the infeasible branch that because of the extra hard constraint.
+%And its path constraint is:
+%\begin{center}
+%$PC_A\leftarrow \displaystyle \bigcap\limits_{i=0}^{6} CB_i \cap CB_u$
+%\end{center}
+%, where the $CB_i$ denotes the path condition at branch $B_i$.
+%
+%Assume that the hard constraint is $var=0xAB$ which is originated 
+%from lazy forking from $B_1$. 
+%We also assume that the branch conditions at $B_3$ and $B_5$ are 
+%also affected by $var$; state $B$ is the corresponding pending state 
+%forked from $B_1$, and its path constraint is:
+%\begin{center}
+%$PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1$
+%\end{center}
+%, where $^\neg CB_1$ is the soft constraint.
+%
+%Then, according to the \textit{LCSP} algorithm in Listing~\ref{LCSP}, 
+%when state $A$ detects the infeasible branch $B_u$ because of hard 
+%constrain, all the related constraints except the hard constraint 
+%of state $A$ will be added to state $B$. After that, the path 
+%constraint of state $B$ will be:
+%
+%\begin{center}
+%$PC_B\leftarrow\displaystyle CB_0 \cap ^\neg CB_1 
+%\cap (\bigcap\limits_{i=0,i \neq 1}^{6} CB_i) \cap ^\neg CB_u$
+%\end{center}
+%where $^\neg CB_u $ is the branch condition we want to cover 
+%and $\bigcap_{i=0,i \neq 1}^{6} CB_i$ is the conditions from 
+%state $A$ after stripping the hard constraint.
+%
+%We need to prove the following formula:
+%
+%\begin{center}
+%$\mathbb{Z}=\{var\arrowvert PC_B(var) = True\} \neq \emptyset$
+%\end{center}
+%
+%As there are only two branches before $B_u$ that depend on $var$, 
+%the expression $PC_B$ can be simplified to:
+%\begin{center}
+%$PC_B\leftarrow^\neg CB_u \cap ^\neg CB_1 \cap CB_3 \cap CB_5$
+%\end{center}
+%
+%There are two possible cases for $CB_3 \cap CB_5$:
+%\begin{center}
+%case1: $CB_3 \cap CB_5 = (var = 0xAB)$
+%
+%case2: $CB_3 \cap CB_5 \neq (var = 0xAB)$
+%\end{center}
+%
+%Under the first case, the path to $B_u$ is only feasible when 
+%$var$ equals to $0xAB$. So the edge $^\neg B_u$ can never be 
+%satisfied (i.e., \emph{dead code}) because $(var = 0xAB) \subseteq CB_u$. 
+%For the second case, there must be at least one feasible solution 
+%for $var$ that satisfies the soft constraint $^\neg CB_1$, so 
+%$^\neg CB_1 \cap \bigcap_{i=0,i \neq 1}^{6} CB_i$ can be evaluated 
+%to $True$ for some specified values of $var$. This has proved that 
+%there must be at least one test case under $PC_B$ that can steer 
+%the program to the infeasible branch $B_u$.
+%
+%Similarly, for branch condition $B_u$, there are also two possible cases:
+%\begin{center}
+%case1: $\displaystyle ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \subseteq CB_u$
+%
+%case2: $\displaystyle ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \nsubseteq CB_u$
+%\end{center}
+%
+%The first case, which can also be expressed as 
+%$^\neg CB_u \cap ^\neg CB_1 \cap \bigcap_{i=0,i\neq 1}^6 CB_i = \emptyset$, 
+%is the case of \emph{dead code}. And the second case can be transformed into:
+%\begin{center}
+%$\displaystyle ^\neg CB_u \cap ^\neg CB_1 \cap \bigcap\limits_{i=0,i\neq 1}^6 CB_i \neq \emptyset \implies \mathbb{Z} = \{var\arrowvert PC_B(var) = True\} \neq \emptyset$
+%\end{center}
+%
+%\noindent which means there must be at least one feasible value 
+%that satisfies the false branch of $B_u$.
+%
+%So above all, we can draw a conclusion that our \emph{LCSP} algorithm 
+%can keep the execution consistency when $^\neg B_u$ is not dead code.
 
 \subsection{Optimization for Symbolic Loop}
 Symbolic loop, whose loop control variable depends on symbolic data, 
