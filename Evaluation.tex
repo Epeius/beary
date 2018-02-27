@@ -22,7 +22,7 @@ investigates the performance contribution of each isolated
 component (i.e. \textit{SPF} and \textit{Searcher}).
 Evaluations were conducted on a server equipped
 with an Intel Xeon CPU E7-2850 @ 2.0GHz with
-20 cores and 128 GB RAM, running Linux Ubuntu 14.04.
+10 cores and 64 GB RAM, running Linux Ubuntu 14.04 AMD64.
 
 \subsection{Vulnerability Detection (RQ1)}
 We evaluated the bug discovery ability of our method with two 
@@ -77,12 +77,9 @@ tools in average.
 For example, AFL discovered the \textit{add16} and LibFuzzer triggered 
 one more bug (i.e., \textit{add32}). And these two fuzzer both failed 
 to uncover the bug that guarded by complex mathematic operations. 
-All tools that leverage symbolic execution except KLEE successfully 
+All tools that leverage symbolic execution successfully 
 triggered all these three bugs since symbolic execution is good at 
-solving such corner cases. One interesting point in this table is that 
-KLEE failed to trigger \textit{add32} and \textit{complex} bugs. 
-This is because KLEE forks too many states in checksum functions 
-which raise the serious path explosion problem. 
+solving such corner cases. 
 
 S2E provides function models for basic functions that may fork too 
 many states, like \texttt{strcpy}, \texttt{strcat}, \texttt{crc16},
@@ -106,20 +103,26 @@ This is because different seed files of the \textit{sudoku} have no
 significant differences (i.e., no more code/branch and memory coverage), 
 which confuses our seed selection method.
 
+Table~\ref{CommonMB-results-detail} also presents the peak memory usage
+of these tools in KB. From these data, we can see that \prototype consumes
+more memory than other four tools, specifically, it brings 1.8\% more memory
+overhead when compared with vanilla S2E. This is because we run both fuzzer and
+symbolic execution in the system.
+
 \begin{table*}[!t]
 \processtable{Evaluation results on \textit{CommonMB} in detail.
 	\label{CommonMB-results-detail}}
-{\begin{tabular*}{20pc}{cccccccccccc}\toprule
+{\begin{tabular*}{20pc}{ccccccccccccc}\toprule
 	&& \multicolumn{2}{c}{CMP}  & \multicolumn{3}{c}{MATH} & \multicolumn{2}{c}{CHECKSUM} 
-	& 	\multicolumn{2}{c}{LOGIC} & \\ 
+	& 	\multicolumn{2}{c}{LOGIC} && \\ 
 	    Tool & version & cmp16 & cmp32 & add16 & add32 & complex & crc16 & 
-	    crc32 & maze & sudoku & Total Crashes (\#) \\
+	    crc32 & maze & sudoku & Total Crashes (\#) & PMU (KB)\\
 \midrule
-		AFL 		& 2.52b	& Y & Y & Y & N & N & N & N & N & N & 3 \\
-		LibFuzzer	& llvm 3.8	& Y & Y & Y & Y & N & N & N & N & N & 4\\
-		KLEE		& 1.4.0	& Y & Y & Y & N & N & N & N & N & N & 3\\
-		S2E			& 2.0	& Y & Y & Y & Y & Y & Y & Y & N & N & 7\\
-		\prototype	& 0.1	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
+		AFL 		& 2.52b		& Y & Y & Y & N & N & N & N & N & N & 3 & 4588.0\\
+		LibFuzzer	& llvm 3.8	& Y & Y & Y & Y & N & N & N & N & N & 4 & 481177.6\\
+		KLEE (Random Searcher)		& 1.4.0		& Y & Y & Y & Y & Y & N & N & N & N & 5 & 108236.8\\
+		S2E			& 2.0		& Y & Y & Y & Y & Y & Y & Y & N & N & 7 & 2979048.0\\
+		\prototype	& 0.1		& Y & Y & Y & Y & Y & Y & Y & Y & N & 8 & 3031373.2\\
 \botrule
 \end{tabular*}}{}
 \end{table*}
@@ -164,6 +167,11 @@ designed to work for a long time on programs that may contain multiple bugs.
 \end{tabular*}}{}
 \end{table}
 
+% Add explaination why we took results directly from other paper
+Note that since \cite{dolan2016lava} does not statement about the details of 
+about the tools and experimental setups they evaluated, we took their results
+directly into Table~\ref{LAVA-1} and Table~\ref{LAVA-M}. 
+
 Table~\ref{LAVA-1} summarized the results of bug finding evaluation on 
 \textit{LAVA-1} from the LAVA paper as well as some popular off-the-shelf 
 tools (AFL and S2E). The maximum testing time for each bug was five hours. 
@@ -179,7 +187,10 @@ touched effectively by the FUZZER and SES tools.
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER 
 and SES which are mentioned in the LAVA paper. We also listed the results 
-of VUzzer and \prototype in this table. 
+of VUzzer and \prototype in this table. Since VUzzer runs only on 32-bit system, 
+we re-executed it within a new environment but running Linux Ubuntu 14.04 X86 
+with the same cores and memory as our experimental setup. 
+
 \begin{table}[!b]
 \processtable{Evaluation results on \textit{LAVA-M}\label{LAVA-M}}
 {\begin{tabular*}{20pc}{@{\extracolsep{\fill}}cccccc@{}}\toprule
