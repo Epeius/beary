@@ -20,8 +20,9 @@ unique paths than the state-of-the-art fuzzer: AFL. RQ3 evaluates
 the overall unique path discovery performance of \prototype and 
 investigates the performance contribution of each isolated 
 component (i.e. \textit{SPF} and \textit{Searcher}).
-
-%TODO: experimental setups, including the OS, RAM, and CPUs.
+Evaluations were conducted on a server equipped
+with an Intel Xeon CPU E7-2850 @ 2.0GHz with
+20 cores and 128 GB RAM, running Linux Ubuntu 14.04.
 
 \subsection{Vulnerability Detection (RQ1)}
 We evaluated the bug discovery ability of our method with two 
@@ -32,7 +33,7 @@ to test different vulnerability discovery tools \cite{dolan2016lava}.
 In the following sections, we are going to introduce the 
 two benchmarks, and discuss the testing results of \prototype
 as well as other off-the-shelf vulnerability discovery tools 
-(LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, Driller, and VUzzer) in detail.
+(LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, and VUzzer) in detail.
 
 \subsubsection{CommonMB}
 \noindent The \emph{CommonMB} benchmark is a demo program which contains 
@@ -108,18 +109,17 @@ which confuses our seed selection method.
 \begin{table*}[!t]
 \processtable{Evaluation results on \textit{CommonMB} in detail.
 	\label{CommonMB-results-detail}}
-{\begin{tabular*}{20pc}{ccccccccccc}\toprule
-	& \multicolumn{2}{c}{CMP}  & \multicolumn{3}{c}{MATH} & \multicolumn{2}{c}{CHECKSUM} 
+{\begin{tabular*}{20pc}{cccccccccccc}\toprule
+	&& \multicolumn{2}{c}{CMP}  & \multicolumn{3}{c}{MATH} & \multicolumn{2}{c}{CHECKSUM} 
 	& 	\multicolumn{2}{c}{LOGIC} & \\ 
-	    Tool & cmp16 & cmp32 & add16 & add32 & complex & crc16 & 
+	    Tool & version & cmp16 & cmp32 & add16 & add32 & complex & crc16 & 
 	    crc32 & maze & sudoku & Total Crashes (\#) \\
 \midrule
-		AFL 		& Y & Y & Y & N & N & N & N & N & N & 3 \\
-		LibFuzzer	& Y & Y & Y & Y & N & N & N & N & N & 4\\
-		KLEE		& Y & Y & Y & N & N & N & N & N & N & 3\\
-		S2E			& Y & Y & Y & Y & Y & Y & Y & N & N & 7\\
-		Driller		& Y & Y & Y & Y & Y & N & N & N & N & 5\\
-		\prototype	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
+		AFL 		& 2.52b	& Y & Y & Y & N & N & N & N & N & N & 3 \\
+		LibFuzzer	& llvm 3.8	& Y & Y & Y & Y & N & N & N & N & N & 4\\
+		KLEE		& 1.4.0	& Y & Y & Y & N & N & N & N & N & N & 3\\
+		S2E			& 2.0	& Y & Y & Y & Y & Y & Y & Y & N & N & 7\\
+		\prototype	& 0.1	& Y & Y & Y & Y & Y & Y & Y & Y & N & 8\\
 \botrule
 \end{tabular*}}{}
 \end{table*}
