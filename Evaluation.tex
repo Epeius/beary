@@ -11,7 +11,7 @@ research questions:
 
 More specifically, RQ1 investigates the bug discovery ability of 
 \prototype and compares the results with other vulnerability 
-detection tools including fuzz testing and dynamic symbolic execution. 
+detection tools including fuzz testing and dynamic symbolic execution.
 For RQ2 and RQ3, we choose to use AFL's \textit{unique paths} as performance evaluation criterion since it is a key factor to reflect the 
 performance of a path-based program testing tool.
 RQ2 evaluates distance based seed selection on several 
@@ -33,7 +33,7 @@ to test different vulnerability discovery tools \cite{dolan2016lava}.
 In the following sections, we are going to introduce the 
 two benchmarks, and discuss the testing results of \prototype
 as well as other off-the-shelf vulnerability discovery tools 
-(LibFuzzer \cite{libfuzzer}, AFL, KLEE, S2E, and VUzzer) in detail.
+(AFL, KLEE, S2E, and VUzzer) in detail.
 
 \subsubsection{CommonMB}
 \noindent The \emph{CommonMB} benchmark is a demo program which contains 
@@ -71,21 +71,20 @@ This is because there two functions are in the shallow surface of
 this benchmark and the conditions to trigger the bugs are simpler 
 than the others.  
 
-% Explain the result, for example, why add32 cannot be found by KLEE...
-Fuzz testing tools discovered few math-bugs than symbolic execution 
-tools in average.
-For example, AFL discovered the \textit{add16} and LibFuzzer triggered 
-one more bug (i.e., \textit{add32}). And these two fuzzer both failed 
-to uncover the bug that guarded by complex mathematic operations. 
+Fuzz testing tool discovered few math-bugs than symbolic execution 
+tools. AFL discovered only one bug in MATH (i.e., \textit{add16}).
+And it failed to uncover the bug that guarded by complex mathematic operations.
+\textcolor{red}{Add the result of VUzzer.} 
 All tools that leverage symbolic execution successfully 
 triggered all these three bugs since symbolic execution is good at 
 solving such corner cases. 
 
 S2E provides function models for basic functions that may fork too 
 many states, like \texttt{strcpy}, \texttt{strcat}, \texttt{crc16},
- and \texttt{crc32}. Based on these models, S2E and \prototype 
- discovered the two bugs that related to checksum successfully 
- (note that this does not mean S2E can break these checksum functions). 
+and \texttt{crc32}. Based on these models, S2E and \prototype 
+discovered the two bugs that related to checksum successfully 
+(note that this does not mean S2E can break these checksum functions). 
+Such bugs cannot be uncovered by KLEE. 
 
 Logic-style vulnerabilities are difficult for all tools to uncover 
 because the number of states will be infinite in the worse case.
@@ -105,9 +104,11 @@ which confuses our seed selection method.
 
 Table~\ref{CommonMB-results-detail} also presents the peak memory usage
 of these tools in KB. From these data, we can see that \prototype consumes
-more memory than other four tools, specifically, it brings 1.8\% more memory
+more memory than other four tools, specifically, it brings memory
 overhead when compared with vanilla S2E. This is because we run both fuzzer and
-symbolic execution in the system.
+symbolic execution in the system. And since \prototype's symbolic execution engine
+works on hybrid testing mode which only forks states for only uncovered branches of 
+the seed from fuzzer, it brings less memory overhead (1.8\% more).
 
 \begin{table*}[!t]
 \processtable{Evaluation results on \textit{CommonMB} in detail.
@@ -119,7 +120,7 @@ symbolic execution in the system.
 	    crc32 & maze & sudoku & Total Crashes (\#) & PMU (KB)\\
 \midrule
 		AFL 		& 2.52b		& Y & Y & Y & N & N & N & N & N & N & 3 & 4588.0\\
-		LibFuzzer	& llvm 3.8	& Y & Y & Y & Y & N & N & N & N & N & 4 & 481177.6\\
+		VUzzer      & 1.0       & Y & Y & Y & N & N & N & N & N & N & 3 & 25702.4\\
 		KLEE (Random Searcher)		& 1.4.0		& Y & Y & Y & Y & Y & N & N & N & N & 5 & 108236.8\\
 		S2E			& 2.0		& Y & Y & Y & Y & Y & Y & Y & N & N & 7 & 2979048.0\\
 		\prototype	& 0.1		& Y & Y & Y & Y & Y & Y & Y & Y & N & 8 & 3031373.2\\
@@ -160,36 +161,53 @@ designed to work for a long time on programs that may contain multiple bugs.
 \midrule
 		FUZZER 		& 0   & 0   & 1    & 11    & 9     & 2  \\
 		SES	        & 1   & 0   & 1    & 3     & 0     & 1  \\
-		AFL		    & 0   & 0   & 2    & 10    & 9     & 1   \\
-		S2E			& 3   & 2   & 3    & 4     & 3     & 2   \\
+		AFL		    & 0   & 0   & 0    & 10    & 9     & 1   \\
+		VUzzer      & 0	  & 0   & 0	   & 2     & 1	   & 0   \\
+		S2E			& 0   & 0   & 0    & 0     & 0     & 0   \\
 		\prototype	& 10  & 10  & 11   & 13    & 11    & 7   \\
 \botrule
 \end{tabular*}}{}
 \end{table}
 
 % Add explaination why we took results directly from other paper
-Note that since \cite{dolan2016lava} does not statement about the details of 
+Note that since \cite{dolan2016lava} does not make a statement about the details of 
 about the tools and experimental setups they evaluated, we took their results
 directly into Table~\ref{LAVA-1} and Table~\ref{LAVA-M}. 
+Because VUzzer runs only on 32-bit system, 
+we re-executed it within a new environment but running Linux Ubuntu 14.04 X86 
+with the same cores and memory as our experimental setup. Meanwhile, since VUzzer
+works on binary mode as well as S2E, \emph{we discard to evaluate KLEE on LAVA benchmark}.
 
 Table~\ref{LAVA-1} summarized the results of bug finding evaluation on 
 \textit{LAVA-1} from the LAVA paper as well as some popular off-the-shelf 
-tools (AFL and S2E). The maximum testing time for each bug was five hours. 
+tools. The maximum testing time for each bug was five hours. 
 From this table, we can see that the \textbf{FUZZER} and \textbf{SES} 
 mentioned in the paper only found 23 bugs and 6 bugs respectively in total. 
-AFL found fewer paths than S2E in the small ranges ($2^0$, $2^7$ and $2^{14}$) 
-but it outperformed S2E in larger ranges. 
+AFL failed to trigger any bugs in small ranges ($2^0$, $2^7$ and $2^{14}$) 
+but it outperformed VUzzer and S2E in larger ranges. 
+VUzzer touched a total of 3 bugs which is less than AFL. 
+This is because VUzzer's dynamic taint analysis slowed down
+the testing speed but gained little in LAVA-1 since the conditions of triggering
+such bugs are not in strictly equality comparison form.
+
+An interesting point is that S2E failed to trigger any bugs in LAVA-1. The reason
+is that because LAVA-1 is built on top of \texttt{file} program which contains many
+lookup tables by symbolic index, and such code will degrade symbolic execution
+to random-like fuzz testing. Meanwhile, since S2E works on full system emulation mode and the execution speed is much less than fuzz testing in user mode like AFL, it failed
+to uncover bugs even in larger areas.
 
 \prototype discovered 62 bugs which was much more than the FUZZER and the 
 SES tools separately. In particular, we triggered all the bugs in $2^7$ and 
 $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be 
-touched effectively by the FUZZER and SES tools. 
+touched effectively by the FUZZER and SES tools. By leveraging LCSP algorithm,
+\prototype's symbolic execution engine can go through the lookup tables to reach
+the bug points, and since the bugs' trigger conditions in LAVA-1 are easy for symbolic 
+execution engine, \prototype thus can uncover almost all the bugs in LAVA-1.
 
 Table~\ref{LAVA-M} describes the evaluation results on LAVA-M of the FUZZER 
-and SES which are mentioned in the LAVA paper. We also listed the results 
-of VUzzer and \prototype in this table. Since VUzzer runs only on 32-bit system, 
-we re-executed it within a new environment but running Linux Ubuntu 14.04 X86 
-with the same cores and memory as our experimental setup. 
+and SES which are mentioned in the LAVA paper. We also listed other popular
+tools and \prototype in this table. From this table we can see \prototype
+outperformed other tools on this benchmark.
 
 \begin{table}[!b]
 \processtable{Evaluation results on \textit{LAVA-M}\label{LAVA-M}}
@@ -199,21 +217,21 @@ with the same cores and memory as our experimental setup.
 \midrule
 		FUZZER 		& 7  & 2  & 7    & 0   & 16  \\
 		SES	        & 9  & 0  & 0    & 18  & 27  \\
-		VUzzer		& 17 & 1* & 27   & 50  & 95 \\
+		AFL         & 0  & 6  & 1    & 3   & 10   \\
+		VUzzer		& 14 & 1* & 24   & 103  & 142 \\
+		S2E         & 1  & 0  & 0    & 2   & 4   \\
 		\prototype	& 37 & 29 & 28   & 203 & 297 \\
 \botrule
 \end{tabular*}}{}
 \end{table}
 
-
 As mentioned in the LAVA paper, SES cannot find any bugs in \texttt{uniq} and 
 \texttt{md5sum}. And the reasons are the control flow is too unconstrained in 
 \texttt{uniq} and SES failed to execute any code past the first instance of 
-the hash function. Because our symbolic execution is driven by a concrete seed 
-input, these two problems will be eased to a large extent, leading to the 
-discovery of more bugs. Particularly, for program \texttt{md5sum}, VUzzer can 
-only trigger one bug because it fails to get through the first crash to parse 
-more of any input, whereas \prototype successfully triggered 29 bugs in 
+the hash function. 
+VUzzer outperformed AFL in \texttt{base64}, \texttt{uniq} and \texttt{who}, 
+but it failed to trigger more bugs than AFL in \texttt{md5sum}. 
+This is because it failed to get through the first crash to parse more of any input \cite{rawat2017vuzzer}, whereas \prototype successfully triggered 29 bugs in 
 \texttt{md5sum}.
 
 \subsubsection{Real-World Programs}
