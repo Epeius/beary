@@ -60,9 +60,9 @@ that have a symbolic iteration counter. Third, in order to address the
 large size of the seed queue, we propose a distance-based seed
 selection algorithm in order to improve coverage when testing time is
 limited. Each seed in the queue is weighted and prioritized according
-to run time information like path and memory coverage.
-
-We benchmarked \prototype on (1) a sample program that contains 9
+to run time information like path and memory coverage. We also 
+implemented our prototype \prototype and benchmarked it on 
+(1) a sample program that contains 9
 different types of representative bugs, (2) the LAVA benchmark suite
 \cite{dolan2016lava}, and (3) a set of UNIX programs. 
 The experiments show that \prototype triggers more bugs
