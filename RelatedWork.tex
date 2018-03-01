@@ -17,6 +17,16 @@ The symbolic pointer problem occurs when the program dereferences a symbolic add
   This can reduce the number of forked states, but a high number of read operations may still cause path explosion.
  Our LCSP method takes advantages of S2E's lazy forking to postpones the path explosion problem to a later moment. 
   LCSP can also improve code coverage by solving the pending states from lazy forking on demand.
-
+  Recently, \textsc{MemSight} \cite{Coppa:2017:RPR:3155562.3155638} introduces a new approach 
+  to symbolic memory that reduces the need for concretization but still can explore more states.
+  It leverages stage merging \cite{Avgerinos:2014:ESE:2568225.2568293} to compact symbolic 
+  pointer read operations. Some optimizations are introduced to deal with performance issues
+  in \textsc{MemSight}, e.g., it constraints the range of symbolic pointer to a certain interval by leveraging SMT solver, which we also used in \prototype. It also proposed  a
+  memory-wise \emph{paged interval tree} to enable better memory space usage. The experimental
+  results compared with Angr show \textsc{MemSight} enables the exploration
+  of states unreachable by previous techniques. Since we are dealing with the symbolic pointer
+  problem in hybrid testing of real-world binaries, which currently Angr cannot support very
+  well now (e.g., complex library function model problem), we will investigate more about \textsc{MemSight} in the near future to adopt its advantages in hybrid testing.
+  
 \noindent\textit{\textbf{Hybrid Testing Method:}}
 As mentioned before, our method is not the first tool to combine fuzz testing and symbolic execution. Hybrid Fuzz Testing uses symbolic execution to discover frontier nodes that represent unique paths in the program \cite{pak2012hybrid}. After collecting as many frontier nodes as possible under a user-specifiable resource constraint, it transits to fuzz the program with random inputs. This tool focuses on binaries but only performs the one-time transition between symbolic execution and fuzz testing. Hybrid Concolic Testing implements multiple transitions between symbolic execution and fuzz testing \cite{majumdar2007hybrid}. But because it is built on top of CUTE, a source code oriented testing tool, so hybrid concolic testing still cannot be deployed on binary testing directly \cite{sen2005cute}. Driller is an up-to-date hybrid testing tool that leverages fuzz testing and concolic execution in a complementary manner to find deeper bugs \cite{stephens2016driller}. It is more practice when compared with previous hybrid tools. Some other tools try to make full use of symbolic execution to maximize the code coverage, they collect symbolic constraints placed on each input and then negating these constraints to generate a new test case that will take another uncovered path, such as SAGE \cite{godefroid2012sage}, Dowser \cite{haller2013dowsing}, FuzzWin \cite{online:fuzzwin} etc. However, as these tools execute each input in the symbolic mode which determines that they have to face the path explosion problem. 
