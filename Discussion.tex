@@ -27,7 +27,9 @@ selection strategies failed to trigger more new behaviors for
 symbolic execution engine we depend on will concretize symbolic 
 write operations to \texttt{XMM} registers, which will lose some 
 interesting paths when handling float point arithmetic operations. 
-This problem happens for most of the MEPG processing programs. 
+For example, the \emph{Floating-point Number} benchmark in \cite{xu2017benchmarking}
+makes an obstacle for KLEE to solve.
+This problem also happens for most of the image processing programs. 
 So the dynamic symbolic execution engine should be upgraded to 
 support float point arithmetic operations to handle 
 these types of programs.
