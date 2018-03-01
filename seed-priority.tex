@@ -32,9 +32,9 @@ scheduled as the next seed.
 We investigate three popular distance measures, i.e., \textit{Euclidean Distance}, 
 \textit{Cosine Similarity} and \textit{Jaccard Index}, as the distance metrics 
 for calculating the \textit{weight} value for each seed. 
-In the following sections, we firstly review these three distance metrics 
-and then explain how a test case is mapped to a numerical vector as well 
-as the seed selection method.
+%In the following sections, we firstly review these three distance metrics 
+%and then explain how a test case is mapped to a numerical vector as well 
+%as the seed selection method.
 
 \begin{figure}[!t]
 \centering
@@ -42,65 +42,9 @@ as the seed selection method.
 \caption{A motivating example to demonstrate how seed selection  
 	affects the testing efficiency.}\label{motivate-example}
 \end{figure}
-
-\subsection{Distance Metrics}
-For two vectors $\mathit{X} = (x_1, x_2, \cdots, x_N)$ and 
-$\mathit{Y} = (y_1, y_2, \cdots, y_N)$, the corresponding similarity 
-metrics for \textit{Euclidean Distance}, \textit{Cosine Similarity} 
-and \textit{Jaccard Index} are listed as follows.
-
-\begin{enumerate}
-\item Euclidean Distance (EU)
-
-The Euclidean Distance between two vectors is defined as follows:
-\begin{center}
-$EU(\mathit{X}, \mathit{Y}) = \displaystyle \sqrt{\sum_{i=1}^{N} (x_i-y_i)^2}$
-\end{center}
-
-\item Cosine Similarity (CS)
-
-The consine similarity between $\mathit{X}$ and $\mathit{Y}$ is defined as follows:
-
-\begin{center}
-$CS(\mathit{X}, \mathit{Y}) = \displaystyle \sqrt{\frac{\mathit{X}^T 
-		\cdot \mathit{Y}} {\| \mathit{X} \|\| \mathit{Y} \|}}$
-\end{center}
-where $\mathit{X}^T$ is a transposition of vector $\mathit{X}$ and 
-$\| \mathit{X}\|$ is the Euclidean Distance of
-vector $\mathit{X}$. Similarly, $\|\mathit{Y}\|$ is the Euclidean 
-norm of vector $\mathit{Y}$. In essence, \textit{CS} is the cosine of 
-the angle between $\mathit{X}$ and $\mathit{Y}$ in the N-dimensional 
-space. For cosine similarly, the corresponding distance is defined as:
-
-\begin{center}
-$D(\mathit{X},\mathit{Y}) = 1 - CS(\mathit{X},\mathit{Y})$
-\end{center}
-
-\item Jaccard Index (JI)
-
-The Jaccard Index between $\mathit{X}$ and $\mathit{Y}$ is defined as follows:
-
-\begin{center}
-$JI(\mathit{X}, \mathit{Y}) = \displaystyle \frac{\mathit{X} \cdot 
-	\mathit{Y}}{\mathit{X} \cdot \mathit{Y}+\omega(\|\mathit{X}\|^2+
-	\|\mathit{Y}\|^2-2(\mathit{X} \cdot \mathit{Y}))}$
-\end{center}
-
-where $\mathit{X} \cdot \mathit{Y}$ is the inner product of 
-$\mathit{X}$ and $\mathit{Y}$. 
-When $\omega$ is equal to 1, the above formula is called Jaccard 
-index and its corresponding distance is defined as follows:
-
-\begin{center}
-$D(\mathit{X},\mathit{Y}) = 1 - JI(\mathit{X},\mathit{Y})$
-\end{center}
-
-\end{enumerate}
-
-\subsection{Seed Selection Method}
 In order to measure the distances, all test cases should be mapped 
 as numerical vectors. 
-The mapping can be performed into both the input space and state space. 
+The mapping can be performed into either the input space or state space. 
 Mapping into the input space cannot reflect the real relationship between 
 test cases when considering the behavior of the target program. 
 For example, as shown in Figure~\ref{distance-illusion}, multiple different 
@@ -196,3 +140,12 @@ denotes the number of memory cells that $t_k$ covers in byte.
 \begin{center}
 $\hat{W_k} = \displaystyle M(t_k) + \frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
 \end{center} 
+
+AFL introduces mutation energy (mutation times) for each seed based 
+on some properties like bitmap coverage, file size, execution time and so on. 
+We leveraged the similar idea in our distance based seed selection. 
+Based on the enhanced weight, our fuzzer engine assigns each seed with an extra
+energy to mutation. That is, a seed in the queue with greater weight will
+be fuzzed with more times. By assigning more mutation times for the seed that
+may cover more untouched code areas, we increase the probability to trigger
+more paths.
