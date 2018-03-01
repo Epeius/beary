@@ -474,7 +474,13 @@ Most of the forked states from line 6 may not contribute
 to any new code coverage but only bring performance overhead.
 It is therefore important to also handle symbolic loops. 
 
-A \textit{boundary state prioritization} method has been proposed 
+AEG \cite{Avgerinos:2014:AEG:2556647.2560219} proposes \emph{loop exhaustion}
+search strategy to handle symbolic loops. It tries to execute the loop as many
+times as possible. Since it focuses only on maximizing the loop iterations which
+may fork lots of states, it thus may stuck the fuzzer from exploring more paths 
+in our hybrid testing framework.
+
+A \textit{boundary state prioritization} method has been proposed recently
 to ease the path explosion problem due to symbolic loops.
 The key idea of this prioritization is to defer the analysis of 
 uninteresting states based on the likelihood of a security vulnerability \cite{cab-fuzz}. 
