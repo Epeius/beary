@@ -141,7 +141,7 @@ denotes the number of memory cells that $t_k$ covers in byte.
 $\hat{W_k} = \displaystyle M(t_k) + \frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
 \end{center} 
 
-AFL introduces mutation energy (mutation times) for each seed based 
+AFL introduces \textit{Energy} (i.e., mutation times) for each seed based 
 on some properties like bitmap coverage, file size, execution time and so on. 
 We leveraged the similar idea in our distance based seed selection. 
 Based on the enhanced weight, our fuzzer engine assigns each seed with an extra

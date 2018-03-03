@@ -263,7 +263,7 @@ under each bucket's key (i.e.,$v$).
 For each satisfied bucket, real solutions for current $e_{addr}$ are sieved out 
 (line 16$\sim$25). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
 (line 20\&21). All $C_{new}$ evaluated as True will be collected together (line 22
-$\sim$24). The $\cup$ in line 23 compact consecutive $addr$s into a range expression.
+$\sim$24). The $\cup$ in line 23 compacts consecutive $addr$s into a range expression.
 For example, $\{e_addr=4\}$, $\{e_addr=5\}$ and $\{e_addr=6\}$ will be transformed to
 $\{4<=e_addr<=6\}$.
 
