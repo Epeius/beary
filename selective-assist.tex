@@ -140,7 +140,7 @@ lazy forking still belongs to DFS state exploration strategy.
 So even though lazy forking can ease the path explosion problem, 
 it may still need to take longer time to trigger interesting paths. 
 This will result in performance loss, because the symbolic 
-execution engine will hold up the fuzzer. 
+execution engine may hold up the fuzzer. 
 
 To mitigate this problem, we introduce a novel method 
 \emph{lazy concretization of symbolic pointer} (LCSP) 
@@ -154,28 +154,28 @@ float=tp]{codes/real-eaxmple-LSP.c}
 
 Whenever the execution engine touches a symbolic pointer $e_{addr}$, it obtains 
 the range of all possible values $\mathcal{R}$ by invoking function \texttt{getRange} 
-in constraint solver. Then memory values $v$ within the range are dissolved
+in the constraint solver. Then all memory values within the range are dissolved
 into buckets $\mathcal{B}=\langle v, addr\rangle$, where $v$ is the memory value; $addr$
-is the set of memory cell's address whose memory value is $v$. 
+is the set of memory cell's address whose memory value is $v$.
 After this, we reuse S2E's lazy forking method to pickup 
-the buckets that contains the concrete value of this symbolic pointer.
+the bucket that contains the concrete value of this symbolic pointer.
 For example, when executing the code at line 18 in Listing~\ref{RE-LCSP}, the range of 
 the symbolic pointer is $\mathcal{R}=\texttt{\&text\_chars}+\{0, 1,\cdots, 255\}$.
 By scanning the memory cells within $\mathcal{R}$, we can build 4 buckets, i.e., 
 
-$\mathcal{B}_0=\{v=0| addr=[0,1,2,3,4,5,6,11,14,15,\cdots]\}$
+$\mathcal{B}_0:\{v=0| addr=[0,1,2,3,4,5,6,11,14,15,\cdots]\}$
 
-$\mathcal{B}_1=\{v=1| addr=[7,8,9,10,12,13,\cdots]\}$
+$\mathcal{B}_1:\{v=1| addr=[7,8,9,10,12,13,\cdots]\}$
 
-$\mathcal{B}_2=\{v=2| addr=[160,161\cdots, 253,254,255]\}$
+$\mathcal{B}_2:\{v=2| addr=[160,161\cdots, 253,254,255]\}$
 
-$\mathcal{B}_3=\{v=3| addr=[128,129,130,\cdots,159]\}$
+$\mathcal{B}_3:\{v=3| addr=[128,129,130,\cdots,159]\}$
 
 Since $e_{addr}$'s concrete value belongs to $\mathcal{B}_1$, we then
 introduce a new symbolic variable $v_p$ into the engine and update current path constraint by adding expanded hard constraint $condition$ to it. 
-$condition$ is descried as $P_\mathcal{B}\cap P_v\cap P_p$, where
+$condition$ is descried as $P_v\cap P_p$, where
 
-$P_\mathcal{B}=\{\bigcup\limits_{i=0}^{Len_{addr}-1}e_{addr}=addr_i\}$;
+%$P_\mathcal{B}=\{\bigcup\limits_{i=0}^{Len_{addr}-1}e_{addr}=addr_i\}$;
 
 $P_v=\{v_p=1\}$; 
 
@@ -190,17 +190,17 @@ This constraint is used to keep execution consistency.
  \LinesNumbered
   \caption{Lazy concretization of symbolic pointer}
   \label{LCSP}
-  \KwIn{Current state $S$, pending states $S_P$, hard constraint $C_H$, 
-  	    pointer dereference constraint $C_{pd}$.}
+  \KwIn{Current state $S$, pending states $S_P$, failed condition $C_F$, 
+  	    the set of hard constraints $S_{C_F}$, pointer dereference constraint $C_{pd}$.}
   \KwOut{Testcase $t_{lsp}$ if success.}
-  $C_F = getFailedCondition()$\;
+  %C_F = getFailedCondition()$\;
   % ignore cases that unrelated to symbolic pointer
   \If{$C_F$ \textbf{is not result from symbolic pointer}}
   {
   	return $null$\;
   }
-  $offs = S.getInputOffset(C_F)$\;
-  
+  $offs = S$.getInputOffset($C_F$)\;
+  $C_H = S_{C_H}$.getRelated($offs$)\;
   % Collect all possible bucket's addr to Solutions
   $extraCond\leftarrow True$\;
   \ForEach{$s_p$ in $S_P$}
@@ -248,28 +248,28 @@ These pending states are grouped by the program variables (e.g., each
 byte in an input file) that affect the corresponding soft constraint. 
 They are also ordered along with the execution trace.
 Then when the dynamic symbolic execution engine detects an infeasible 
-branch due to hard constraints from symbolic pointer (line 3$\sim$5), 
+branch due to hard constraints from symbolic pointer (line 1$\sim$3), 
 the branch condition $C_F$ will be 
-investigated to extract the program variables $offs$ (line 5).
+investigated to extract the program variables $offs$ (line 4).
 
 
 
-Since we introduce new symbolic variable when dereferencing a symbolic pointer,
+Since we have introduced new symbolic variable when dereferencing a symbolic pointer,
 we need to make sure all conditions in $C_{pd}$ are satisfied so that the generated
 test case can keep execution consistency.
 Line 14 collects all satisfied buckets into $\mathcal{B}_{sat}$. The collect procedure
 is light-weight since \texttt{getSATBuckets} only needs to evaluate $C_{pd}$
-under each bucket's key (i.e.,$v$).
+under each bucket's key (i.e.,$\mathcal{B}.v$).
 For each satisfied bucket, real solutions for current $e_{addr}$ are sieved out 
 (line 16$\sim$25). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
 (line 20\&21). All $C_{new}$ evaluated as True will be collected together (line 22
 $\sim$24). The $\cup$ in line 23 compacts consecutive $addr$s into a range expression.
-For example, $\{e_addr=4\}$, $\{e_addr=5\}$ and $\{e_addr=6\}$ will be transformed to
-$\{4<=e_addr<=6\}$.
+For example, $\{e_{addr}=4\}$, $\{e_{addr}=5\}$ and $\{e_{addr}=6\}$ will be transformed to
+$\{4<=e_{addr}<=6\}$.
 
 By analyzing all pending states, the final extra condition $extraCond$ is constructed
 (line 26).
-After this, we remove $C_H$ and $C_{pd}$ from a newly cloned state $s_{tmp}$
+After this, we remove all hard constraints $S_{C_H}$ and $C_{pd}$ from a newly cloned state $s_{tmp}$
 from current state and append
 the final extra condition to it (line 29$\sim$31). 
 The reason why $C_{pd}$ is stripped is because it is already satisfied at line 14.
@@ -283,17 +283,20 @@ Then when dynamic symbolic execution reaches line 24, there will be
 six states in the system: one execution state $S_0$ and five pending 
 states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when 
 dereferencing \texttt{buf[$i$]} at line 18. And pointer dereference
-constraint $C_{pd}$ is $\{v_0=T\cap v_1=T\cap v_2=T\cap v_3=T\cap v_4=T\}$,
+constraint $C_{pd}$ is $\{(v_0=T)\cap (v_1=T)\cap (v_2=T)\cap (v_3=T)\cap (v_4=T)\}$,
 where $v_i$ is introduced for each symbolic pointer dereference at
-line 18.
+line 18; $S_{C_H}$ is $\{C_{H0}\cap C_{H1}\cap C_{H2}\cap C_{H3}\cap C_{H4}\}$,
+where $C_{Hi}$ is $\{v_i=T\cap \texttt{buf[i]=`A'}\}$.
 
 Because of the hard constraint, the four condition instructions at line 24
 is infeasible. 
-For example, for condition \texttt{ubuf[0]==`D'}, since line
-18 introduces $\texttt{buf[0]=`A'}$, condition \texttt{ubuf[0]==`D'} cannot
+For example, for failed condition $C_F=\{\texttt{ubuf[0]==`D'}\}$, since line
+18 introduces $\texttt{buf[0]=`A'}$ in $C_{H1}$, condition \texttt{ubuf[0]==`D'} cannot
 be satisfied. LCSP first checks the input offset that results in this infeasible
 condition and deals all pending states related to this offset. Based on this,
-only $P_0$ is analyzed in order to break \texttt{ubuf[0]==`D'}. As mentioned before,
+only $P_0$ is analyzed in order to break \texttt{ubuf[0]==`D'}, and the
+corresponding $C_H$ in line 5 is $C_{H1}$; $e_{addr}$ in line 13 is
+\texttt{\texttt{text\_chars+buf[0]}}. As mentioned before,
 there are four buckets for $P_0$, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$,
 $\mathcal{B}_3$. Then \texttt{getSATBuckets} verifies keys for all these four buckets 
 to sieve the feasible ones. In this example, $\mathcal{B}_{sat}=\{\mathcal{B}_1\}$ since
@@ -305,7 +308,7 @@ This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
 Then LCSP fixes current path condition by stripping unrelated conditions and adding
 $\{\texttt{buf[0]=`D'}\}$ to it. After this, it invokes constraint solver to 
 generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]==`D'}, the 
-generated test case is \texttt{DAAAA}. This test case will be sent to the fuzzer and the
+generated test case $t_{lsp}$ is \texttt{DAAAA}. This test case will be sent to the fuzzer and the
 remained three conditions at line 24 will be solved in the same way. Thus, based on this algorithm, we can generate at least one fresh test case 
 that satisfies the branch condition whenever a branch is infeasible 
 because of lazy forking. 

@@ -13,6 +13,7 @@ component is leveraged to help the fuzzer dive into deeper code areas
 that are guarded by complex path constraints. Techniques to handle the
 \textit{path explosion} problem raised by symbolic pointers and loops
 are implemented inside of \emph{SPF}. The \emph{Searcher} is designed
-to select the most promising seed file from the seed queue based on the
-distance measurement. By doing this, the fuzzer will reach previously
-untouched code areas as soon as possible in a given time budget.
+to assign more mutation energy to the promising seeds based on the weight
+value obtained by distance based seed selection method. 
+By doing this, the fuzzer will reach previously
+untouched more code areas as soon as possible in a given time budget.

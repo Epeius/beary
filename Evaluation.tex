@@ -7,7 +7,7 @@ research questions:
 	improve performance of path discovery?}
 \item {\textbf{RQ3:} How does each component contribute to 
 	path discovery?}
-\item {\textbf{RQ4:} Does \prototype uncover bugs in real-world binaries?}
+\item {\textbf{RQ4:} Did \prototype uncover unreported bugs in real-world binaries?}
 \end{itemize}
 
 More specifically, RQ1 investigates the bug discovery ability of 
@@ -25,10 +25,10 @@ component (i.e. \textit{SPF} and \textit{Searcher}). RQ4 benchmarks
 discover unreported crashes.
 
 Evaluations were conducted on a server equipped
-with an Intel Xeon CPU E7-2850 @ 2.0GHz with
-10 cores and 64 GB RAM, running Linux Ubuntu 14.04 AMD64.
+with an Intel Xeon CPU E7-2850@2.0GHz with
+10 cores and 64 GB RAM, running Linux Ubuntu 14.04 LTS AMD64.
 
-\subsection{Vulnerability Detection (RQ1)}
+\subsection{Vulnerability Detection (RQ1)}\label{sec:RQ1}
 We evaluated the bug discovery ability of our method with two 
 different benchmarks. The first benchmark is a demo program 
 which is named as \emph{CommonMB}. 
@@ -37,7 +37,13 @@ to test different vulnerability discovery tools \cite{dolan2016lava}.
 In the following sections, we are going to introduce the 
 two benchmarks, and discuss the testing results of \prototype
 as well as other off-the-shelf vulnerability discovery tools 
-(AFL, KLEE, S2E, and VUzzer) in detail.
+(AFL, VUzzer, KLEE, and S2E) in detail. AFL and VUzzer are coverage
+based fuzzers. VUzzer leverages static analysis to extract comparison
+instructions then introduces these information into mutation to improve coverage
+\cite{rawat2017vuzzer}. By doing such, VUzzer is good at uncovering magic number
+related bugs. KLEE and S2E are both symbolic execution tools. However, KLEE works
+in user mode and can only handle compiled LLVM byte code. S2E can deal 
+directly with binary executables on full software stack.
 
 \subsubsection{CommonMB}
 \noindent The \emph{CommonMB} benchmark is a demo program which contains 
@@ -55,7 +61,8 @@ successfully goes through the checksum checking points; and the logic
 bugs utilize two simple logical games (maze and semi-sudoku) as the 
 constraints for triggering the bugs, which means the bugs can only be 
 triggered when the testing engine successfully solves the games. We 
-released \emph{CommonMB} benchmark at \texttt{https://github.com/Epeius/CommonMB.git}.
+released \emph{CommonMB} benchmark on
+\texttt{https://github.com/Epeius/CommonMB.git}.
 
 The bugs in \emph{CommonMB} benchmark represent the common bug conditions 
 in real-world programs. For example, compare-style bugs denote the bugs 
@@ -78,7 +85,7 @@ than the others.
 Fuzz testing tool discovered few math-bugs than symbolic execution 
 tools. AFL discovered only one bug in MATH (i.e., \textit{add16}).
 And it failed to uncover the bug that guarded by complex mathematic operations.
-\textcolor{red}{Add the result of VUzzer.} 
+VUzzer failed to detect any bugs in MATH.
 All tools that leverage symbolic execution successfully 
 triggered all these three bugs since symbolic execution is good at 
 solving such corner cases. 
@@ -95,8 +102,8 @@ because the number of states will be infinite in the worse case.
 For example, when solving a maze, the possible oscillation between 
 two opposite steps (such as step forward and step backward) 
 will stop the engine from finding new paths.
-With the help of our seed selection method, \prototype selected 
-the seed file with the maximum average distance to schedule. 
+With the help of our seed selection method, \prototype assigned 
+the seed file with the maximum average distance with more energy to mutate. 
 Since this distance metric tries to maximize the memory coverage, 
 \prototype successfully triggered the bug after covering all 
 the memory access to the maze array. 
@@ -106,7 +113,7 @@ This is because different seed files of the \textit{sudoku} have no
 significant differences (i.e., no more code/branch and memory coverage), 
 which confuses our seed selection method.
 
-Table~\ref{CommonMB-results-detail} also presents the peak memory usage
+Table~\ref{CommonMB-results-detail} also presents the peak memory usage (PMU)
 of these tools in KB. From these data, we can see that \prototype consumes
 more memory than other four tools, specifically, it brings memory
 overhead when compared with vanilla S2E. This is because we run both fuzzer and
@@ -123,11 +130,11 @@ the seed from fuzzer, it brings less memory overhead (1.8\% more).
 	    Tool & version & cmp16 & cmp32 & add16 & add32 & complex & crc16 & 
 	    crc32 & maze & sudoku & Total Crashes (\#) & PMU (KB)\\
 \midrule
-		AFL 		& 2.52b		& Y & Y & Y & N & N & N & N & N & N & 3 & 4588.0\\
-		VUzzer      & 1.0       & Y & Y & Y & N & N & N & N & N & N & 3 & 25702.4\\
-		KLEE (Random Searcher)		& 1.4.0		& Y & Y & Y & Y & Y & N & N & N & N & 5 & 108236.8\\
-		S2E			& 2.0		& Y & Y & Y & Y & Y & Y & Y & N & N & 7 & 2979048.0\\
-		\prototype	& 0.1		& Y & Y & Y & Y & Y & Y & Y & Y & N & 8 & 3031373.2\\
+		AFL 		& 2.52b		& \cmark & \cmark & \cmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & 3 & 4588.0\\
+		VUzzer      & 1.0       & \cmark & \cmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & \xmark & 3 & 25702.4\\
+		KLEE (Random Searcher)		& 1.4.0		& \cmark & \cmark & \cmark & \cmark & \cmark & \xmark & \xmark & \xmark & \xmark & 5 & 108236.8\\
+		S2E			& 2.0		& \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \xmark & \xmark & 7 & 2979048.0\\
+		\prototype	& 0.1		& \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \cmark & \xmark & 8 & 3031373.2\\
 \botrule
 \end{tabular*}}{}
 \end{table*}
@@ -179,8 +186,8 @@ designed to work for a long time on programs that may contain multiple bugs.
 Note that since \cite{dolan2016lava} does not make a statement about the details of 
 about the tools and experimental setups they evaluated, we took their results
 directly into Table~\ref{LAVA-1} and Table~\ref{LAVA-M}. 
-Because VUzzer runs only on 32-bit system, 
-we re-executed it within a new environment but running Linux Ubuntu 14.04 X86 
+Also, because VUzzer runs only on 32-bit system, 
+we re-executed VUzzer within a new environment running Linux Ubuntu 14.04 X86 
 with the same cores and memory as our experimental setup. Meanwhile, since VUzzer
 works on binary mode as well as S2E, \emph{we discard to evaluate KLEE on LAVA benchmark}.
 
@@ -191,10 +198,10 @@ and \textit{Jaccard Index} metrics.
 
 Table~\ref{LAVA-1} summarized the results of bug finding evaluation on 
 \textit{LAVA-1} from the LAVA paper as well as some popular off-the-shelf 
-tools. The maximum testing time for each bug was five hours. 
+tools. The maximum testing time for each bug was 5 hours. 
 From this table, we can see that the \textbf{FUZZER} and \textbf{SES} 
 mentioned in the paper only found 23 bugs and 6 bugs respectively in total. 
-AFL failed to trigger any bugs in small ranges ($2^0$, $2^7$ and $2^{14}$) 
+AFL failed to trigger any bugs in smaller ranges ($2^0$, $2^7$ and $2^{14}$) 
 but it outperformed VUzzer and S2E in larger ranges. 
 VUzzer touched a total of 3 bugs which is less than AFL. 
 This is because VUzzer's dynamic taint analysis slowed down
@@ -204,14 +211,17 @@ such bugs are not in strictly equality comparison form.
 An interesting point is that S2E failed to trigger any bugs in LAVA-1. The reason
 is that because LAVA-1 is built on top of \texttt{file} program which contains many
 lookup tables by symbolic index, and such code will degrade symbolic execution
-to random-like fuzz testing. Meanwhile, since S2E works on full system emulation mode and the execution speed is much less than fuzz testing in user mode like AFL, it failed to uncover bugs even in larger areas.
+to random-like fuzz testing (as shown in Listing~\ref{RE-LCSP}). Meanwhile, 
+since S2E works on full system emulation mode and the execution speed is much less 
+than fuzz testing in user mode like AFL, it failed to uncover bugs even in larger areas.
 
 \prototype discovered 62 bugs which was much more than the FUZZER and the 
 SES tools separately. In particular, we triggered all the bugs in $2^7$ and 
 $2^{14}$ ranges. And also found most of the KT bugs (70\%) which cannot be 
 touched effectively by the FUZZER and SES tools. By leveraging LCSP algorithm,
 \prototype's symbolic execution engine can go through the lookup tables to reach
-the bug points, and since the bugs' trigger conditions in LAVA-1 are easy for symbolic execution engine, \prototype thus can uncover almost all the bugs in LAVA-1.
+the bug points, and since the bugs' trigger conditions in LAVA-1 are easy for 
+symbolic execution engine, \prototype thus can uncover almost all the bugs in LAVA-1.
 
 We can also derive from Table~\ref{LAVA-1} that the gain of \prototype in LAVA-1 mostly
 comes from \textit{SPF} ($\prototype_*$ has the similar performance
@@ -256,12 +266,13 @@ This is because it failed to get through the first crash to parse more of any in
 Similar to LAVA-1, the bug points in LAVA-M are also easy-to-reach. This is why
 $\prototype_*$ bring little performance improvement when compared with AFL. However,
 since \textit{SPF} leverages symbolic execution to solve the bug conditions, more
-bugs are triggered.
+bugs are exposed.
 
-Since, the role of the fuzzer engine (specifically, \textit{Searcher}) in hybrid testing 
+Since the role of the fuzzer (specifically, \textit{Searcher}) in hybrid testing 
 is to find as many code areas as possible,
 we devised more experiments
-to illustrate the coverage performance in \ref{sec:RQ2} and \ref{sec:RQ3}.
+to illustrate the coverage performance of distance based seed selection method
+in \ref{sec:RQ2} and \ref{sec:RQ3}.
 
 \subsection{Coverage Performance (RQ2)}\label{sec:RQ2}
 Our benchmark for coverage performance evaluation consists of 8 real-world binary 
@@ -280,12 +291,11 @@ single work node.
 
 The evaluation results were shown in Table~\ref{PD-8samples}. We have 
 investigated the three distance measures mentioned before (i.e., EU, CS, 
-and JI) as well as the original seed selection strategy (Order) from 
-vanilla AFL which selects test case in the seed queue one by one.
-From this table, we can see that by prioritizing the mutation orders of 
+and JI) as well as vanilla AFL (Order).
+From this table, we can see that by assigning more mutation energy to promising
 seeds, the fuzzer can touch more unique paths in average.
  More clearly, Figure~\ref{path-detail}(a) shows the normalized unique 
- paths to vanilla AFL (i.e., orderly selection) for these 8 programs 
+ paths to vanilla AFL for these 8 programs 
  based on the results in Table~\ref{PD-8samples}.
 \begin{table}[!b]
 \processtable{Number of unique paths discoverd for 8 sample programs\label{PD-8samples}}
@@ -349,13 +359,12 @@ While JI performed well in \texttt{readelf}, \texttt{ffmpeg} and
 Especially for \texttt{ffmpeg}, we can see that in the first 4 hours, 
 all of these four selection strategies achieved the same 
 performance on discovering unique paths. However, vanilla AFL 
-(i.e., Order) failed to trigger more unique paths during 4$\sim$18 
+failed to trigger more unique paths during 4$\sim$18 
 hours before it started to find new paths again.
 This is because the mutation areas of seeds that processed 
 during 4$\sim$18 hours are overlapped with each other 
 (as shown in Figure~\ref{motivate-example}), which will not 
-contribute any new paths. However, by selecting seed that has 
-longest distance from already explored spaces, our distance based 
+contribute any new paths. However, our distance based 
 seed selection strategy can consistently trigger new paths 
 during 24 hours as shown in this figure.
 
@@ -387,7 +396,7 @@ In our experiments, since Driller \cite{stephens2016driller} does not support
 real-world binary programs very well now (many library functions and system 
 calls are not modeled), we reimplemented the mechanism of Driller within 
 S2E to collect the results for SEHT. And based on the results of 
-subsection~\ref{sec:RQ2}, our searcher employs cosine similarity 
+subsection~\ref{sec:RQ2}, our searcher employs \emph{cosine similarity} 
 as the distance metric.
 
 Figure~\ref{path-overall-rsults} summarizes the results of how each 
@@ -424,7 +433,8 @@ However, this does not mean the contribution of \textit{SPF} is
 negligible. By integrating \textit{SPF} component (i.e., \textit{LCSP} 
 and \textit{SLB}), the symbolic execution engine can dive into deeper 
 code areas to solve \textit{complex branch conditions} to help fuzzer 
-find more fresh paths and discover more hard-to-reach vulnerabilities.
+find more fresh paths and discover more hard-to-reach vulnerabilities
+(as shown in \ref{sec:RQ1}).
 
       
 \begin{figure}
@@ -451,7 +461,7 @@ the float number operation when handing MPEG/WAV format (for example, all the
 writing operation to \texttt{XMM} registers will be concretized). This concretization 
 lost some interesting paths and made less contribution to bug finding(only 2 more 
 bugs for \texttt{mp3gain} and 1 more bug for \texttt{madplay}). 
-This also explains the phenomena that VUzzer found more bugs in \texttt{mp3gain} 
+This also explains why VUzzer found more bugs in \texttt{mp3gain} 
 than \prototype. 
 It is interesting that AFL detected 15 more bugs in \texttt{elfparser} than VUzzer. 
 This is because the fork server method leveraged in AFL enables the fuzzer can 

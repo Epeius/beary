@@ -27,8 +27,8 @@ based on the \textit{distance} between test cases.
 Our method firstly maps each seed in the queue as a numerical vector. 
 Then each seed is assigned with a \emph{weight} value according to the 
 distance from other test cases and its runtime information, which is 
-then utilized as the criteria to determine which seed file should be 
-scheduled as the next seed. 
+then utilized as the criteria to determine how many times a seed should
+be mutated. 
 We investigate three popular distance measures, i.e., \textit{Euclidean Distance}, 
 \textit{Cosine Similarity} and \textit{Jaccard Index}, as the distance metrics 
 for calculating the \textit{weight} value for each seed. 
@@ -47,8 +47,8 @@ as numerical vectors.
 The mapping can be performed into either the input space or state space. 
 Mapping into the input space cannot reflect the real relationship between 
 test cases when considering the behavior of the target program. 
-For example, as shown in Figure~\ref{distance-illusion}, multiple different 
-inputs can steer the program to execute the same path. Specifically, 
+As shown in Figure~\ref{distance-illusion}, multiple different 
+inputs can steer the program to execute the same path. For example, 
 considering the three test cases namely \texttt{A.jpeg}, \texttt{B.jpeg} 
 and \texttt{C.jpeg} in this figure, suppose the corresponding contents 
 are shown as follows:
@@ -142,7 +142,8 @@ $\hat{W_k} = \displaystyle M(t_k) + \frac{1}{N} \sum_{i=0}^{N} D(t_i, t_k)$
 \end{center} 
 
 AFL introduces \textit{Energy} (i.e., mutation times) for each seed based 
-on some properties like bitmap coverage, file size, execution time and so on. 
+on some properties like bitmap coverage, file size, execution time and so on.
+For example, a seed with more bitmap coverage will be fuzzed with more times. 
 We leveraged the similar idea in our distance based seed selection. 
 Based on the enhanced weight, our fuzzer engine assigns each seed with an extra
 energy to mutation. That is, a seed in the queue with greater weight will
