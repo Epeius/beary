@@ -58,7 +58,9 @@ and constraint solving optimizations \cite{Cadar:2015:TPT}.
  
 With this insight, we propose that in the future, binary executables 
 should be pre-processed to transform \textit{testing-expensive} 
-code structures to \textit{testing-cheap} ones.
+code structures to \textit{testing-cheap} ones. For example, transforming
+a long string comparison instruction to several isolated byte comparison
+instructions will improve the performance of fuzz testing.
 Similar to \cite{wagner2015high}, the binary pre-processing stage 
 should recognize which code areas are the testing ``hot spot'' and 
 remove/transform them to avoiding getting stuck in such areas.
