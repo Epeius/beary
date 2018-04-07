@@ -450,13 +450,13 @@ For example, when executing the code at line 18 in Listing~\ref{RE-LCSP}, the ra
 the symbolic pointer is $\mathcal{R}=\texttt{\&text\_chars}+\{0, 1,\cdots, 255\}$.
 By scanning the memory cells within $\mathcal{R}$, we can build 4 buckets, i.e., 
 
-$\mathcal{B}_0:\{v=0| addr=[0,1,2,3,4,5,6,11,14,15,\cdots]\}$
+$\mathcal{B}_0:\{v=\texttt{F}| addr=[0,1,2,3,4,5,6,\cdots]+\texttt{\&text\_chars}\}$
 
-$\mathcal{B}_1:\{v=1| addr=[7,8,9,10,12,13,\cdots]\}$
+$\mathcal{B}_1:\{v=\texttt{T}| addr=[7,8,9,10,12,13,\cdots]+\texttt{\&text\_chars}\}$
 
-$\mathcal{B}_2:\{v=2| addr=[160,161\cdots, 253,254,255]\}$
+$\mathcal{B}_2:\{v=\texttt{I}| addr=[160,161\cdots,254,255]+\texttt{\&text\_chars}\}$
 
-$\mathcal{B}_3:\{v=3| addr=[128,129,130,\cdots,159]\}$
+$\mathcal{B}_3:\{v=\texttt{X}| addr=[128,129,130,\cdots,159]+\texttt{\&text\_chars}\}$
 
 Since $e_{addr}$'s concrete value belongs to $\mathcal{B}_1$, we then
 introduce a new symbolic variable $v_p$ into the engine and update current path constraint by adding expanded hard constraint $condition$ to it. 
@@ -522,7 +522,7 @@ This constraint is used to keep execution consistency.
 	$s_{tmp}$.getConditions().strip($C_{pd}$)\;
 	$s_{tmp}$.addConstraint($extraCond$)\;
 	
-	$(success, t_{lsp}) = s_{tmp}$.generateTestcase()\;
+	$(success, t_{lsp}) = s_{tmp}$.generateTestCase()\;
 	\If{$success$}
 	{
 		return $t_{lsp}$;
@@ -556,8 +556,8 @@ $\sim$25). The $\cup$ in line 24 compacts consecutive $addr$s into a range expre
 For example, $\{e_{addr}=4\}$, $\{e_{addr}=5\}$ and $\{e_{addr}=6\}$ will be transformed to
 $\{4<=e_{addr}<=6\}$.
 
-By analyzing all pending states, the final extra condition $extraCond$ is constructed
-(line 28).
+By analyzing all pending states that related to $off_{fork}$, 
+the final extra condition $extraCond$ is constructed (line 28).
 After this, we remove all hard constraints $S_{C_H}$ and $C_{pd}$ from a newly cloned state $s_{tmp}$
 from current state and append
 the final extra condition to it (line 31$\sim$33). 
@@ -571,31 +571,40 @@ For the code in Listing~\ref{RE-LCSP}, suppose \texttt{nbytes} is 5.
 Then when dynamic symbolic execution reaches line 24, there will be 
 six states in the system: one execution state $S_0$ and five pending 
 states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when 
-dereferencing \texttt{buf[$i$]} at line 18. And pointer dereference
-constraint $C_{pd}$ is $\{(v_0=T)\cap (v_1=T)\cap (v_2=T)\cap (v_3=T)\cap (v_4=T)\}$,
+dereferencing \texttt{buf[$i$]} at line 18. And the pointer dereference
+constraint $C_{pd}$ is 
+$\{(v_0=\texttt{T})\cap (v_1=\texttt{T})\cap (v_2=\texttt{T})\cap (v_3=\texttt{T})\cap (v_4=\texttt{T})\}$,
 where $v_i$ is introduced for each symbolic pointer dereference at
 line 18; $S_{C_H}$ is $\{C_{H0}\cap C_{H1}\cap C_{H2}\cap C_{H3}\cap C_{H4}\}$,
-where $C_{Hi}$ is $\{v_i=T\cap \texttt{buf[i]=`A'}\}$.
+where $C_{Hi}$ is $\{v_i=\texttt{T}\cap \texttt{buf[i]=`A'}\}$.
 
 Because of the hard constraint, the four condition instructions at line 24
-is infeasible. 
-For example, for failed condition $C_F=\{\texttt{ubuf[0]==`D'}\}$, since line
-18 introduces $\texttt{buf[0]=`A'}$ in $C_{H1}$, condition \texttt{ubuf[0]==`D'} cannot
-be satisfied. LCSP first checks the input offset that results in this infeasible
-condition and deals all pending states related to this offset. Based on this,
-only $P_0$ is analyzed in order to break \texttt{ubuf[0]==`D'}, and the
-corresponding $C_H$ in line 5 is $C_{H1}$; $e_{addr}$ in line 13 is
-\texttt{\texttt{text\_chars+buf[0]}}. As mentioned before,
-there are four buckets for $P_0$, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$,
-$\mathcal{B}_3$. Then \texttt{getSATBuckets} verifies keys for all these four buckets 
-to sieve the feasible ones. In this example, $\mathcal{B}_{sat}=\{\mathcal{B}_1\}$ since
-$v_0=T$ in $C_{pd}$ must be satisfied. 
+are infeasible. We pick up the first failed condition 
+$C_F=\{\texttt{ubuf[0]==`D'}\}$ to explain how LCSP works in detail.
 
-Then from line 16 to line 27 in Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition. The final constructed extra
-condition for \texttt{ubuf[0]==`D'} in this example is $extraCond=\{\texttt{buf[0]=`D'}\}$.
+The fork failure raises because line 18 introduces $\texttt{buf[0]=`A'}$ in $C_{H1}$, which conflicts with condition \texttt{ubuf[0]==`D'}. 
+According to Algorithm~\ref{LCSP}, 
+LCSP first checks the input offset that results in this infeasible
+condition and deals all pending states related to this offset. 
+Based on this,
+only $P_0$ is chosen to break \texttt{ubuf[0]==`D'}, and the
+corresponding $C_H$ and $e_{addr}$ in Algorithm~\ref{LCSP} is $C_{H1}$ and 
+\texttt{text\_chars+buf[0]} respectively.
+
+Then all satisfied buckets of $P_0$ are sieved out by evaluating the 
+pointer dereference constraint $C_{pd}$. 
+There are four buckets for $P_0$ as mentioned before, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$, and $\mathcal{B}_3$, whose memory value
+$v$ is $\mathcal{B}_0.v=\texttt{F}$, $\mathcal{B}_1.v=\texttt{T}$, $\mathcal{B}_2.v=\texttt{I}$, and $\mathcal{B}_3.v=\texttt{X}$ respectively. 
+After evaluating all these four buckets, $\mathcal{B}_{sat}=\{\mathcal{B}_1\}$ since
+$C_{pd}$ is only satisfied when $v_0 = \mathcal{B}_1.v=\texttt{T}$.
+
+After this, Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition (line 16$\sim$27). The final constructed extra
+condition $extraCond$ in this example is $\{e_{addr} = \texttt{\&text\_chars+`D'}\}$.
 This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
 Then LCSP fixes current path condition by stripping unrelated conditions and adding
-$\{\texttt{buf[0]=`D'}\}$ to it. After this, it invokes constraint solver to 
+$\{e_{addr} = \texttt{\&text\_chars+`D'}\}$ to it, where $e_{addr}$ is \texttt{text\_chars+buf[0]}.
+
+At last, LCSP invokes the constraint solver to 
 generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]==`D'}, the 
 generated test case $t_{lsp}$ is \texttt{DAAAA}. This test case will be sent to the fuzzer and the
 remained three conditions at line 24 will be solved in the same way. Thus, based on this algorithm, we can generate at least one fresh test case 
