@@ -480,7 +480,6 @@ This constraint is used to keep execution consistency.
 	\KwIn{Current state $S$, pending states $S_P$, failed condition $C_F$, 
 		the set of hard constraints $S_{C_H}$, pointer dereference constraint $C_{pd}$.}
 	\KwOut{Testcase $t_{lsp}$ if success.}
-	%C_F = getFailedCondition()$\;
 	% ignore cases that unrelated to symbolic pointer
 	\If{$C_F$ \textbf{is not result from symbolic pointer}}
 	{
@@ -501,18 +500,21 @@ This constraint is used to keep execution consistency.
 		$\mathcal{B}_{sat}=s_p$.getSATBuckets($C_{pd}$, $\mathcal{B}$)\;
 		
 		% sieve real solutions out
-		$curExtraCond\leftarrow False$\;
-		\ForEach{$addr$ in $\mathcal{B}_{sat}$.addr}
+		$curExCond\leftarrow False$\;
+		\ForEach{$\mathcal{B}$ in $\mathcal{B}_{sat}$}
 		{
-			$s_{tmp} = S$.clone()\;
-			$s_{tmp}$.getConditions().strip($C_H$)\;
-			$s_{tmp}$.addConstraint($C_F$)\;
-			$C_{new}\leftarrow \{e_{addr}=addr\}$\;
-			$success = s_{tmp}$.evaluate($C_{new}$)\;
-			\If{success}
-			{$curExtraCond\leftarrow curExtraCond\cup C_{new}$\;}
+			\ForEach{$addr$ in $\mathcal{B}$.addr}
+			{
+				$s_{tmp} = S$.clone()\;
+				$s_{tmp}$.getConditions().strip($C_H$)\;
+				$s_{tmp}$.addConstraint($C_F$)\;
+				$C_{new}\leftarrow \{e_{addr}=addr\}$\;
+				$success = s_{tmp}$.evaluate($C_{new}$)\;
+				\If{success}
+				{$curExCond\leftarrow curExCond\cup C_{new}$\;}
+			}
 		}
-		$extraCond\leftarrow extraCond\cap curExtraCond$\;
+		$extraCond\leftarrow extraCond\cap curExCond$\;
 	}
 	
 	$s_{tmp} = S$.clone()\;
@@ -542,26 +544,26 @@ investigated to extract the program variables $offs$ (line 4).
 
 
 Since we have introduced new symbolic variable when dereferencing a symbolic pointer,
-we need to make sure all conditions in $C_{pd}$ are satisfied so that the generated
-test case can keep execution consistency.
+we need to make sure \textbf{all conditions in $C_{pd}$ are satisfied so that the generated
+test case can keep execution consistency}.
 Line 14 collects all satisfied buckets into $\mathcal{B}_{sat}$. The collect procedure
 is light-weight since \texttt{getSATBuckets} only needs to evaluate $C_{pd}$
 under each bucket's key (i.e.,$\mathcal{B}.v$).
 For each satisfied bucket, real solutions for current $e_{addr}$ are sieved out 
-(line 16$\sim$25). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
-(line 20\&21). All $C_{new}$ evaluated as True will be collected together (line 22
-$\sim$24). The $\cup$ in line 23 compacts consecutive $addr$s into a range expression.
+(line 16$\sim$27). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
+(line 21\&22). All $C_{new}$ evaluated as True will be collected together (line 23
+$\sim$25). The $\cup$ in line 24 compacts consecutive $addr$s into a range expression.
 For example, $\{e_{addr}=4\}$, $\{e_{addr}=5\}$ and $\{e_{addr}=6\}$ will be transformed to
 $\{4<=e_{addr}<=6\}$.
 
 By analyzing all pending states, the final extra condition $extraCond$ is constructed
-(line 26).
+(line 28).
 After this, we remove all hard constraints $S_{C_H}$ and $C_{pd}$ from a newly cloned state $s_{tmp}$
 from current state and append
-the final extra condition to it (line 29$\sim$31). 
+the final extra condition to it (line 31$\sim$33). 
 The reason why $C_{pd}$ is stripped is because it is already satisfied at line 14.
 After appending all related conditions, the dynamic symbolic execution 
-engine will try to generate a new test case (line 32), and once the 
+engine will try to generate a new test case (line 34), and once the 
 generation successes, the test case $t_{lsp}$ will be sent to the 
 fuzzer to find more paths.
 
@@ -589,7 +591,7 @@ $\mathcal{B}_3$. Then \texttt{getSATBuckets} verifies keys for all these four bu
 to sieve the feasible ones. In this example, $\mathcal{B}_{sat}=\{\mathcal{B}_1\}$ since
 $v_0=T$ in $C_{pd}$ must be satisfied. 
 
-Then from line 16 to line 25 in Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition. The final constructed extra
+Then from line 16 to line 27 in Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition. The final constructed extra
 condition for \texttt{ubuf[0]==`D'} in this example is $extraCond=\{\texttt{buf[0]=`D'}\}$.
 This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
 Then LCSP fixes current path condition by stripping unrelated conditions and adding
