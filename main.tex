@@ -462,9 +462,9 @@ Since $e_{addr}$'s concrete value belongs to $\mathcal{B}_1$, we then
 introduce a new symbolic variable $v_p$ into the engine and update current path constraint by adding expanded hard constraint $condition$ to it. 
 $condition$ is descried as $P_v\cap P_p$, where
 
-$P_v=\{v_p=\texttt{T}\}$; 
+$P_v=\{v_p==\texttt{T}\}$; 
 
-$P_p=\{e_{addr}=0x41+\&\texttt{text\_chars}\}$.
+$P_p=\{e_{addr}==0x41+\&\texttt{text\_chars}\}$.
 
 During the following execution, all path conditions that related to the newly
 introduced symbolic variable $v_p$ will be collected as pointer dereference constraint
@@ -551,7 +551,7 @@ For each satisfied bucket, real solutions for current $e_{addr}$ are sieved out
 (line 16$\sim$27). This is achieved by evaluating each $addr$ in $\mathcal{B}_{sat}$
 (line 21\&22). All $C_{new}$ evaluated as True will be collected together (line 23
 $\sim$25). The $\cup$ in line 24 compacts consecutive $addr$s into a range expression.
-For example, $\{e_{addr}=4\}$, $\{e_{addr}=5\}$ and $\{e_{addr}=6\}$ will be transformed to
+For example, $\{e_{addr}==4\}$, $\{e_{addr}==5\}$ and $\{e_{addr}==6\}$ will be transformed to
 $\{4<=e_{addr}<=6\}$.
 
 By analyzing all pending states that related to $off_{fork}$, 
@@ -571,21 +571,21 @@ six states in the system: one execution state $S_0$ and five pending
 states ($P_0$, $P_1$, $P_2$, $P_3$, and $P_4$). $P_i$ is forked when 
 dereferencing \texttt{buf[$i$]} at line 18. And the pointer dereference
 constraint $C_{pd}$ is 
-$\{(v_0=\texttt{T})\cap (v_1=\texttt{T})\cap (v_2=\texttt{T})\cap (v_3=\texttt{T})\cap (v_4=\texttt{T})\}$,
+$\{(v_0==\texttt{T})\cap (v_1==\texttt{T})\cap (v_2==\texttt{T})\cap (v_3==\texttt{T})\cap (v_4==\texttt{T})\}$,
 where $v_i$ is introduced for each symbolic pointer dereference at
 line 18; $S_{C_H}$ is $\{C_{H0}\cap C_{H1}\cap C_{H2}\cap C_{H3}\cap C_{H4}\}$,
-where $C_{Hi}$ is $\{v_i=\texttt{T}\cap \texttt{buf[i]=`A'}\}$. Here, \texttt{buf[i]=`A'} is derived from $\{\texttt{text\_chars+buf[i]}=\texttt{text\_chars+`A'}\}$
+where $C_{Hi}$ is $\{v_i==\texttt{T}\cap \texttt{buf[i]==`A'}\}$. Here, \texttt{buf[i]==`A'} is derived from $\{\texttt{text\_chars+buf[i]}==\texttt{text\_chars+`A'}\}$
 
 Because of the hard constraint, the four condition instructions at line 24
 are infeasible. We pick up the first failed condition 
-$C_F=\{\texttt{ubuf[0]=`D'}\}$ to explain how LCSP works in detail.
+$C_F=\{\texttt{ubuf[0]==`D'}\}$ to explain how LCSP works in detail.
 
-The fork failure raises because line 18 introduces $\texttt{buf[0]=`A'}$ in $C_{H1}$, which conflicts with condition \texttt{ubuf[0]=`D'}. 
+The fork failure raises because line 18 introduces $\texttt{buf[0]==`A'}$ in $C_{H1}$, which conflicts with condition \texttt{ubuf[0]==`D'}. 
 According to Algorithm~\ref{LCSP}, 
 LCSP first checks the input offset that results in this infeasible
 condition and deals all pending states related to this offset. 
 Based on this,
-only $P_0$ is chosen to break \texttt{ubuf[0]=`D'}, and the
+only $P_0$ is chosen to break \texttt{ubuf[0]==`D'}, and the
 corresponding $C_H$ and $e_{addr}$ in Algorithm~\ref{LCSP} is $C_{H1}$ and 
 \texttt{text\_chars+buf[0]} respectively.
 
@@ -594,16 +594,16 @@ pointer dereference constraint $C_{pd}$.
 There are four buckets for $P_0$ as mentioned before, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$, and $\mathcal{B}_3$, whose memory value
 $v$ is $\mathcal{B}_0.v=\texttt{F}$, $\mathcal{B}_1.v=\texttt{T}$, $\mathcal{B}_2.v=\texttt{I}$, and $\mathcal{B}_3.v=\texttt{X}$ respectively. 
 After evaluating all these four buckets, $\mathcal{B}_{sat}$ is $\{\mathcal{B}_1\}$ since
-$C_{pd}$ is only satisfied when $v_0 = \mathcal{B}_1.v=\texttt{T}$.
+$C_{pd}$ is only satisfied when $v_0 == \mathcal{B}_1.v=\texttt{T}$.
 
 After this, Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition (line 16$\sim$27). The final constructed extra
-condition $extraCond$ in this example is $\{e_{addr} = \texttt{\&text\_chars+`D'}\}$.
+condition $extraCond$ in this example is $\{e_{addr}==\texttt{\&text\_chars+`D'}\}$.
 This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
 Then LCSP fixes current path condition by stripping unrelated conditions and adding
-$\{e_{addr} = \texttt{\&text\_chars+`D'}\}$ to it, where $e_{addr}$ is \texttt{text\_chars+buf[0]}.
+$\{e_{addr}==\texttt{\&text\_chars+`D'}\}$ to it, where $e_{addr}$ is \texttt{text\_chars+buf[0]}.
 
 At last, LCSP invokes the constraint solver to 
-generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]=`D'}, the 
+generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]==`D'}, the 
 generated test case $t_{lsp}$ is \texttt{DAAAA}. This test case will be sent to the fuzzer and the
 remained three conditions at line 24 will be solved in the same way. Thus, based on this algorithm, we can generate at least one fresh test case 
 that satisfies the branch condition whenever a branch is infeasible 
