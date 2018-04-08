@@ -586,21 +586,21 @@ LCSP first checks the input offset that results in this infeasible
 condition and deals all pending states related to this offset. 
 Based on this,
 only $P_0$ is chosen to break \texttt{ubuf[0]==`D'}, and the
-corresponding $C_H$ and $e_{addr}$ in Algorithm~\ref{LCSP} is $C_{H1}$ and 
+corresponding $C_H$ and $e_{addr}$ in Algorithm~\ref{LCSP} are $C_{H1}$ and 
 \texttt{text\_chars+buf[0]} respectively.
 
 Then all satisfied buckets of $P_0$ are sieved out by evaluating the 
 pointer dereference constraint $C_{pd}$. 
 There are four buckets for $P_0$ as mentioned before, i.e., $\mathcal{B}_0$, $\mathcal{B}_1$, $\mathcal{B}_2$, and $\mathcal{B}_3$, whose memory value
-$v$ is $\mathcal{B}_0.v=\texttt{F}$, $\mathcal{B}_1.v=\texttt{T}$, $\mathcal{B}_2.v=\texttt{I}$, and $\mathcal{B}_3.v=\texttt{X}$ respectively. 
+$v$ are $\mathcal{B}_0.v=\texttt{F}$, $\mathcal{B}_1.v=\texttt{T}$, $\mathcal{B}_2.v=\texttt{I}$, and $\mathcal{B}_3.v=\texttt{X}$ respectively. 
 After evaluating all these four buckets, $\mathcal{B}_{sat}$ is $\{\mathcal{B}_1\}$ since
-$C_{pd}$ is only satisfied when $v_0 == \mathcal{B}_1.v=\texttt{T}$.
+$C_{pd}$ is only satisfied when $v_0 = \mathcal{B}_1.v=\texttt{T}$.
 
 After this, Algorithm~\ref{LCSP} evaluates each $addr$ in $\mathcal{B}_1$ to build the final extra condition (line 16$\sim$27). The final constructed extra
 condition $extraCond$ in this example is $\{e_{addr}==\texttt{\&text\_chars+`D'}\}$.
 This $extraCond$ keeps not only $C_F$ but also $C_{pd}$ be satisfied.
 Then LCSP fixes current path condition by stripping unrelated conditions and adding
-$\{e_{addr}==\texttt{\&text\_chars+`D'}\}$ to it, where $e_{addr}$ is \texttt{text\_chars+buf[0]}.
+$\{e_{addr}==\texttt{\&text\_chars+`D'}\}$ to it, where $e_{addr}$ is \texttt{\&text\_chars+buf[0]}.
 
 At last, LCSP invokes the constraint solver to 
 generate a fresh test case. Here, after breaking condition \texttt{ubuf[0]==`D'}, the 
